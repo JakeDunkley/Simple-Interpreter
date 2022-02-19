@@ -1,12 +1,14 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <string>
 #include <queue>
 
 using namespace std;
 
+// Used for labeling tokens that are later passed to the parser.
 typedef enum {
-    errorBadSymbol      = -1,
+    badSymbol           = -1,
     identifier          = 0,
     literalInteger      = 1,
     operatorAssignment  = 2,
@@ -30,10 +32,14 @@ struct Token {
 
 // Main.
 int main() {
-    // All characters that should be ignored.
-    const vector<char> ignoredChars = {'\n', ' ', '\t'};
+    const string charsIgnore = "\n\t ";                             // All characters that should be ignored.
+    const string charsLiteralInteger = "0123456789";                // Characters that are valid for building an integer
+                                                                    // literal.
+    const string charsIdentifier = "abcdefghijklmnopqrstuvwxyz";    // Characters that are valid for building an
+                                                                    // identifier.
 
     // Stream for incoming program file.
+    //NOTE: macOS requires an absolute file path for some godforsaken reason.
     fstream testFile("/Users/jake/CLionProjects/Dunkley_CS4308_LexicalAnalyzer/program.txt");
 
     // Holds raw character data from file.
@@ -44,19 +50,25 @@ int main() {
 
 
     if (testFile.is_open()) {
-        char curChar;                       // Holds value of current character being analyzed.
-        queue<char> literalIntegerRegister; // Holds values of integer being built.
+        char charCurrent;   // Holds value of current character being analyzed.
 
-        // Main loop
-        while (testFile.get(curChar)) {
+        // Loop for extracting characters out of program file.
+        while (testFile.get(charCurrent)) {
             bool isValidChar = true;
 
-            for (char iC : ignoredChars) {
-                if (iC == curChar) isValidChar = false;
+            // Check if current character should be ignored.
+            for (char cI : charsIgnore) {
+                if (cI == charCurrent) isValidChar = false;
             }
 
-            if (isValidChar) collectedChars.push_back(curChar);
+            // If good character, add to collection.
+            if (isValidChar) collectedChars.push_back(charCurrent);
         }
+
+        queue<char> registerLiteralInteger;     // Holds chars of integer being built.
+        queue<char> registerIdentifier;         // Holds chars of identifier being built.
+
+        //TODO Loop for building tokens from characters.
     }
 
     else {
@@ -66,8 +78,6 @@ int main() {
     for (int i = 0; i < collectedChars.size(); i++) {
         cout << i << ": \"" << collectedChars[i] << "\"" << endl;
     }
-
-    //TODO tokenize.
 
     return 0;
 }
