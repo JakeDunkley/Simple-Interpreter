@@ -1,3 +1,7 @@
+// Name:        Jake Dunkley
+// Class:       CS 4308 - Concepts of Programming Languages
+// Assignment:  Simple julia interpreter
+
 #include <iostream>
 #include <fstream>
 #include <vector>
