@@ -73,102 +73,67 @@ int main() {
     // NOTE: macOS requires an absolute file path for some godforsaken reason.
     fstream testFile("/Users/jake/CLionProjects/Dunkley_CS4308_LexicalAnalyzer/program.txt");
 
-    // Holds raw character data from file.
-    vector<char> charsCollected;
-
     // Holds finished token information for later use.
     vector<Token*> tokens;
 
     // This area collects all non-ignored characters into a vector for easier parsing later.
     if (testFile.is_open()) {
-        char charCurrent;   // Holds value of current character being analyzed.
+        char charCurrent;               // Holds value of current character being analyzed.
+        string registerLiteralInteger;  // Holds chars of integer being built.
+        string registerOperator;        // Holds chars of operator being built.
 
         // Loop for extracting characters out of program file.
         while (testFile.get(charCurrent)) {
-            bool isValidChar = true;
 
-            // Check if current character should be ignored.
-            for (char cI : charsIgnore) {
-                if (cI == charCurrent) isValidChar = false;
+            // Check if the current character should be ignored.
+            if (charsIgnore.find(charCurrent) != string::npos) {
+                continue;
             }
 
-            // If good character, add to collection.
-            if (isValidChar) charsCollected.push_back(charCurrent);
-        }
-
-        string registerLiteralInteger;  // Holds chars of integer being built.
-        char registerOperator;          // Holds chars of operators being built.
-
-        //TODO Loop for building tokens from characters.
-
-        // Is the current char a number?
-            // YES: Add it to the int register.
-            // NO: Is the int register occupied?
-                // YES: Build a new int literal token and add it to the token list.
-                // NO: Continue down
-
-        // Is the current char an operator?
-            // YES: Is the operator register occupied?
-                // YES: Build a new operator token based on combined characters.
-                // NO: Set the operator register to the current character.
-            // NO: Is the operator registered occupied?
-                // YES: Build a new operator token based on register contents.
-                // NO: Continue down.
-
-        // Is the current char a letter?
-            // YES: Build a new identifier token and add it to the token list.
-            // NO: Continue down.
-
-        for (char charActive : charsCollected) {
-            if (charsLiteralInteger.find(charActive) != string::npos) {
-                registerLiteralInteger.push_back(charActive);
+            // Check if the current character is (part of) an operator.
+            if (charsOperator.find(charCurrent) != string::npos) {
+                registerOperator.push_back(charCurrent);
+                continue;
             }
 
+            // If it is not an operator, check if the operator register needs to be emptied.
+            else if (!registerOperator.empty()) {
+                tokens.push_back(new Token(operators.find(registerOperator) -> second, registerOperator));
+                registerOperator.clear();
+            }
+
+            // Check if the current character is a number.
+            if (charsLiteralInteger.find(charCurrent) != string::npos) {
+                registerLiteralInteger.push_back(charCurrent);
+                continue;
+            }
+
+            // If it is not a number, check if the integer register needs to be emptied.
             else if (!registerLiteralInteger.empty()) {
                 tokens.push_back(new Token(literalInteger, registerLiteralInteger));
                 registerLiteralInteger.clear();
             }
 
-            if (charsOperator.find(charActive) != string::npos) {
-                if (registerOperator != '\0') {
-                    string compoundOperator = string() + charCurrent + registerOperator;
-                    tokens.push_back(new Token(operators.find(compoundOperator) -> second, compoundOperator));
-                    registerOperator = '\0';
-                }
-
-                else {
-                    registerOperator = charActive;
-                }
+            // Check if the current character is a letter (i.e. an identifier).
+            if (charsIdentifier.find(charCurrent) != string::npos) {
+                tokens.push_back(new Token(identifier, string() + charCurrent));
+                continue;
             }
 
-            else {
-                string singleOperator = string() + registerOperator;
-                tokens.push_back(new Token(operators.find(singleOperator) -> second, singleOperator));
-                registerOperator = '\0';
-            }
-
-            if (charsIdentifier.find(charActive) != string::npos) {
-                tokens.push_back(new Token(identifier, string(1, charActive)));
-            }
-
-            else {
-                tokens.push_back(new Token(badSymbol, string(1, charActive)));
-            }
+            // If the current character is not recognized, add a bad symbol token.
+            tokens.push_back(new Token(badSymbol, string() + charCurrent));
         }
+
+        // Check if any registers are occupied at the end of the file.
+        if (!registerOperator.empty()) tokens.push_back(new Token(operators.find(registerOperator) -> second, registerOperator));
+        if (!registerLiteralInteger.empty()) tokens.push_back(new Token(literalInteger, registerLiteralInteger));
     }
 
     else {
         cout << "There was a problem opening the source file." << endl;
     }
 
-    cout << "Collected characters: " << charsCollected.size() << endl;
-
-    for (int i = 0; i < charsCollected.size(); i++) {
-        cout << i << ": \"" << charsCollected[i] << "\"" << endl;
-    }
-
-    cout << endl;
-    cout << "Minted tokens: " << tokens.size() << endl;
+    cout << "Generated tokens: " << tokens.size() << endl;
 
     for (Token* t : tokens) {
         t -> show();
