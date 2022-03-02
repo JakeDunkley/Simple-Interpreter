@@ -60,12 +60,16 @@ struct Token {
 
 // Main.
 int main() {
+
     // All characters that should be ignored.
     const string charsIgnore = "\n\t ";
+
     // Characters that are valid for building an integer literal.
     const string charsLiteralInteger = "0123456789";
+
     // Characters that are valid for building an identifier.
     const string charsIdentifier = "abcdefghijklmnopqrstuvwxyz";
+
     // Characters that are valid for building an identifier.
     const string charsOperator = "=!<>*/-+";
 
@@ -78,6 +82,7 @@ int main() {
 
     // This area collects all non-ignored characters into a vector for easier parsing later.
     if (testFile.is_open()) {
+
         char charCurrent;               // Holds value of current character being analyzed.
         string registerLiteralInteger;  // Holds chars of integer being built.
         string registerOperator;        // Holds chars of operator being built.
@@ -133,7 +138,7 @@ int main() {
         cout << "There was a problem opening the source file." << endl;
     }
 
-    cout << "Generated tokens: " << tokens.size() << endl;
+    cout << "Generated " << tokens.size() << " tokens: " << endl;
 
     for (Token* t : tokens) {
         t -> show();
