@@ -1,3 +1,5 @@
-a = 37
-test = 54
-c = a + b - 22
+//Test 3 in Julia
+
+function a()
+
+end
