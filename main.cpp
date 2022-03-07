@@ -15,9 +15,7 @@
 using namespace std;
 
 // Stream for incoming program file.
-// NOTE: macOS requires an absolute file path for some godforsaken reason. Please
-// change this before running on another machine.
-fstream testFile("/Users/jake/CLionProjects/Dunkley_CS4308_LexicalAnalyzer/Test3.jl");
+fstream testFile("../Test3.jl");
 
 const string charsIgnore = "\n\t\r ";                       // All characters that should be ignored.
 const string charsLetters = "abcdefghijklmnopqrstuvwxyz";   // Characters that are valid for building an identifier.
