@@ -14,7 +14,10 @@
 
 using namespace std;
 
-const bool debug = true;
+// Stream for incoming program file.
+// NOTE: macOS requires an absolute file path for some godforsaken reason. Please
+// change this before running on another machine.
+fstream testFile("/Users/jake/CLionProjects/Dunkley_CS4308_LexicalAnalyzer/Test3.jl");
 
 const string charsIgnore = "\n\t\r ";                       // All characters that should be ignored.
 const string charsLetters = "abcdefghijklmnopqrstuvwxyz";   // Characters that are valid for building an identifier.
@@ -148,10 +151,6 @@ bool checkRegisterLetters(string& reg, vector<Token*>& toks) {
 }
 
 // All data and variables needed for parsing.
-
-// Stream for incoming program file.
-// NOTE: macOS requires an absolute file path for some godforsaken reason.
-fstream testFile("/Users/jake/CLionProjects/Dunkley_CS4308_LexicalAnalyzer/program.txt");
 
 vector<Token*> tokens;          // Holds finished token information for later use.
 char charCurrent;               // Holds value of current character being analyzed.
