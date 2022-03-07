@@ -103,22 +103,24 @@ TokenValue lookupToken(string& lexeme) {
         return keywords.find(lexeme) -> second;
     }
 
-    else return badSymbol;
+    else return literalInteger;
 }
 
+// Creates a new token from a string lexeme.
 Token* createNewToken(string& lexeme) {
     return new Token{lookupToken(lexeme), lexeme};
 }
 
+// Creates a new token from a char lexeme.
 Token* createNewToken(char& lexeme) {
     string lexToString{string() + lexeme};
     return new Token{lookupToken(lexToString), lexToString};
 }
 
+// Checks if a register is occupied, and creates a new token if so.
 bool checkRegister(string& reg, vector<Token*>& toks) {
     if (!reg.empty()) {
         toks.push_back(createNewToken(reg));
-        cout << reg << endl;
         reg.clear();
         return true;
     }
@@ -126,6 +128,8 @@ bool checkRegister(string& reg, vector<Token*>& toks) {
     return false;
 }
 
+// Checks if the letter register is occupied, and creates a new token if so.
+// Has special rules for creating an identifier or a keyword.
 bool checkRegisterLetters(string& reg, vector<Token*>& toks) {
     if (!reg.empty()) {
         if (reg.size() == 1) {
@@ -136,7 +140,6 @@ bool checkRegisterLetters(string& reg, vector<Token*>& toks) {
             toks.push_back(createNewToken(reg));
         }
 
-        cout << reg << endl;
         reg.clear();
         return true;
     }
@@ -177,13 +180,14 @@ int main() {
                 continue;
             }
 
+            // Check if current character should be ignored.
             if (charsIgnore.find(charCurrent) != string::npos) {
                 checkRegisterLetters(registerLetters, tokens);
                 checkRegister(registerOperator, tokens);
                 checkRegister(registerLiteralInteger, tokens);
             }
 
-            // Check if char is a letter.
+            // Check if current character is a letter.
             else if (charsLetters.find(charCurrent) != string::npos) {
                 checkRegister(registerOperator, tokens);
                 checkRegister(registerLiteralInteger, tokens);
@@ -191,11 +195,12 @@ int main() {
                 registerLetters.push_back(charCurrent);
             }
 
-            // Check if char is an operator.
+            // Check if current character is an operator.
             else if (charsOperator.find(charCurrent) != string::npos) {
                 checkRegisterLetters(registerLetters, tokens);
                 checkRegister(registerLiteralInteger, tokens);
 
+                // Parens have to be identified immediately, otherwise nested parens could be read as one operator.
                 if (charCurrent == '(' || charCurrent == ')') {
                     tokens.push_back(createNewToken(charCurrent));
                 }
@@ -205,7 +210,7 @@ int main() {
                 }
             }
 
-            // Check if char is an integer.
+            // Check if current character is an integer.
             else if (charsLiteralInteger.find(charCurrent) != string::npos) {
                 checkRegisterLetters(registerLetters, tokens);
                 checkRegister(registerOperator, tokens);
@@ -222,20 +227,9 @@ int main() {
         }
 
         // After reading the whole file, see if any registers have data left in them.
-        if (!registerLiteralInteger.empty()) {
-            tokens.push_back(new Token(literalInteger, registerLiteralInteger));
-            registerLiteralInteger.clear();
-        }
-
-        if (!registerOperator.empty()) {
-            tokens.push_back(new Token(lookupToken(registerOperator), registerOperator));
-            registerOperator.clear();
-        }
-
-        if (!registerLetters.empty()) {
-            tokens.push_back(new Token(lookupToken(registerLetters), registerLetters));
-            registerLetters.clear();
-        }
+        checkRegisterLetters(registerLetters, tokens);
+        checkRegister(registerOperator, tokens);
+        checkRegister(registerLiteralInteger, tokens);
     }
 
     else {
