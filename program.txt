@@ -1,10 +1,10 @@
-//Test 3 in Julia
+// This is a test program
 
-function a()
-	x = 1
-		if ~= x 1 then
-			print(0)
-		else
-			print(1)
-		end
+a = 3
+
+function f()
+    b = a + 1
+    print(b)
 end
+
+f()

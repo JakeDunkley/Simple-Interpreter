@@ -15,7 +15,7 @@
 using namespace std;
 
 // Stream for incoming program file.
-fstream testFile("../Test3.jl");
+fstream testFile("../program.txt");
 
 const string charsIgnore = "\n\t\r ";                       // All characters that should be ignored.
 const string charsLetters = "abcdefghijklmnopqrstuvwxyz";   // Characters that are valid for building an identifier.
@@ -49,6 +49,63 @@ typedef enum {
     keywordDo           = 21,
     keywordPrint        = 22
 } TokenValue;
+
+// Returns TokenValue enum identifier. Just for debugging.
+string getTokenValueIdentifier(const TokenValue& v) {
+    switch(v) {
+        case badSymbol:
+            return "badSymbol";
+        case identifier:
+            return "identifier";
+        case literalInteger:
+            return "literalInteger";
+        case operatorAssignment:
+            return "operatorAssignment";
+        case operatorLessEq:
+            return "operatorLessEq";
+        case operatorLess:
+            return "operatorLess";
+        case operatorGreatEq:
+            return "operatorGreatEq";
+        case operatorGreat:
+            return "operatorGreat";
+        case operatorEqual:
+            return "operatorEqual";
+        case operatorNotEqual:
+            return "operatorNotEqual";
+        case operatorAdd:
+            return "operatorAdd";
+        case operatorSub:
+            return "operatorSub";
+        case operatorMult:
+            return "operatorMult";
+        case operatorDiv:
+            return "operatorDiv";
+        case operatorParenL:
+            return "operatorParenL";
+        case operatorParenR:
+            return "operatorParenR";
+        case keywordFunction:
+            return "keywordFunction";
+        case keywordEnd:
+            return "keywordEnd";
+        case keywordIf:
+            return "keywordIf";
+        case keywordThen:
+            return "keywordThen";
+        case keywordElse:
+            return "keywordElse";
+            break;
+        case keywordWhile:
+            return "keywordWhile";
+        case keywordDo:
+            return "keywordDo";
+        case keywordPrint:
+            return "keywordPrint";
+        default:
+            return "TOKEN_VALUE_NOT_FOUND";
+    }
+}
 
 // Defines link between operator lexemes and their token values.
 const map<string, TokenValue> operators {
@@ -90,7 +147,8 @@ struct Token {
     }
 
     void show() {
-        cout << "Value: " << value << "\t Lexeme: " << lexeme << endl;
+        cout << "[ VALUE: " << setw(20) << left << getTokenValueIdentifier(value) + ", ";
+        cout << "LEXEME: " << setw(11) << left << "\"" + lexeme + "\"" << "]" << endl;
     }
 };
 
@@ -104,6 +162,7 @@ TokenValue lookupToken(string& lexeme) {
         return keywords.find(lexeme) -> second;
     }
 
+    //TODO change this so += doesn't cause problems
     else return literalInteger;
 }
 
@@ -149,7 +208,6 @@ bool checkRegisterLetters(string& reg, vector<Token*>& toks) {
 }
 
 // All data and variables needed for parsing.
-
 vector<Token*> tokens;          // Holds finished token information for later use.
 char charCurrent;               // Holds value of current character being analyzed.
 string registerLetters;         // Holds char(s) of keyword or identifier being built.
@@ -157,7 +215,6 @@ string registerOperator;        // Holds chars of operator being built.
 string registerLiteralInteger;  // Holds chars of integer being built.
 
 // Main.
-// Abandon hope, all ye who enter...
 int main() {
 
     // This area collects all non-ignored characters into a vector for easier parsing later.
