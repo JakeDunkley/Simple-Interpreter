@@ -3,7 +3,7 @@
  * Term:        Spring 2022
  * Name:        Jake Dunkley
  * Instructor:  Sharon Perry
- * Project:     Deliverable P1 Scanner
+ * Project:     Deliverable P2/P3 Interpreter
  */
 
 #include <iostream>
@@ -17,7 +17,7 @@ using namespace std;
 // Stream for incoming program file.
 fstream testFile("../program.txt");
 
-const string charsIgnore = "\n\t\r ";                       // All characters that should be ignored.
+const string charsIgnore = "\n\t\r ";                       // Characters that should be ignored.
 const string charsLetters = "abcdefghijklmnopqrstuvwxyz";   // Characters that are valid for building an identifier.
 const string charsOperator = "=~<>*/-+()";                  // Characters that are valid for building an identifier.
 const string charsLiteralInteger = "0123456789";            // Characters that are valid for building an integer literal.
@@ -95,7 +95,6 @@ string getTokenValueIdentifier(const TokenValue& v) {
             return "keywordThen";
         case keywordElse:
             return "keywordElse";
-            break;
         case keywordWhile:
             return "keywordWhile";
         case keywordDo:
