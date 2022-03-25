@@ -1,8 +1,6 @@
 // This is a test program
 
 function f()
-    a = 4
-    b = 13 + a
-
-    print(b)
+    a = 3
+    print(a)
 end
