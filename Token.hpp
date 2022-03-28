@@ -3,7 +3,7 @@
  * Term:        Spring 2022
  * Name:        Jake Dunkley
  * Instructor:  Sharon Perry
- * Project:     Deliverable P2/P3 Interpreter
+ * Project:     Deliverable P2 Parser
  */
 
 #pragma once
@@ -138,8 +138,8 @@ string getTokenValueIdentifier(const TokenValue& v) {
 
 // Structure to hold token values.
 struct Token {
-    TokenValue value;
-    string lexeme;
+    TokenValue value; // Holds the type of token.
+    string lexeme;    // Holds the actual contents of the token.
 
     Token(TokenValue value_, const string& lexeme_) {
         value = value_;

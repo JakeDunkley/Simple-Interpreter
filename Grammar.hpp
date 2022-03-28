@@ -3,7 +3,7 @@
  * Term:        Spring 2022
  * Name:        Jake Dunkley
  * Instructor:  Sharon Perry
- * Project:     Deliverable P2/P3 Interpreter
+ * Project:     Deliverable P2 Parser
  */
 
 #pragma once
@@ -17,71 +17,89 @@
 
 using namespace std;
 
-// Defines and holds the definitions of the language.
-const multimap<string, vector<string>> words {
-        {"program",               {"function", "id", "paren_l", "paren_r", "block", "end"}},
-        {"block",                 {"statement"}},
-        {"block",                 {"statement", "block"}},
-        {"statement",             {"statement_if"}},
-        {"statement",             {"statement_assignment"}},
-        {"statement",             {"statement_while"}},
-        {"statement",             {"statement_print"}},
-        {"statement",             {"statement_repeat"}},
-        {"statement_if",          {"if", "expression_boolean", "then", "block", "else", "block", "end"}},
-        {"statement_while",       {"while", "expression_boolean", "do", "block", "end"}},
-        {"statement_assignment",  {"id", "operator_assignment", "expression_arithmetic"}},
-        {"statement_repeat",      {"repeat", "block", "until", "expression_boolean"}},
-        {"statement_print",       {"print", "paren_l", "expression_arithmetic", "paren_r"}},
-        {"expression_boolean",    {"operator_relative", "expression_arithmetic", "expression_arithmetic"}},
-        {"operator_relative",     {"operator_lessEq"}},
-        {"operator_relative",     {"operator_less"}},
-        {"operator_relative",     {"operator_greatEq"}},
-        {"operator_relative",     {"operator_great"}},
-        {"operator_relative",     {"operator_Equal"}},
-        {"operator_relative",     {"operator_notEqual"}},
-        {"expression_arithmetic", {"integer"}},
-        {"expression_arithmetic", {"integer", "expression_arithmetic"}},
-        {"expression_arithmetic", {"operator_arithmetic", "expression_arithmetic"}},
-        {"expression_arithmetic", {"paren_l", "expression_arithmetic", "paren_r"}},
-        {"expression_arithmetic", {"operator_arithmetic", "integer"}},
-        {"integer",               {"id"}},
-        {"integer",               {"integer_literal"}},
-        {"operator_arithmetic",   {"operator_add"}},
-        {"operator_arithmetic",   {"operator_sub"}},
-        {"operator_arithmetic",   {"operator_mult"}},
-        {"operator_arithmetic",   {"operator_div"}}
+// This is used later to find all matches to a certain word.
+typedef multimap<string, vector<string>>::const_iterator defIter;
+
+// This is the definitions of all words in the grammer.
+const multimap<string, vector<string>> definitions {
+        {"program",              {"functionHeader", "block", "keywordEnd"}},
+        {"functionHeader",       {"keywordFunction", "identifier", "operatorParenL", "operatorParenR"}},
+        {"block",                {"statement", "block"}},
+        {"statement",            {"statementIf"}},
+        {"statement",            {"statementWhile"}},
+        {"statement",            {"statementAssignment"}},
+        {"statement",            {"statementPrint"}},
+        {"statement",            {"statementRepeat"}},
+        {"statementIf",          {"keywordIf", "expressionBoolean", "keywordThen", "block", "keywordElse", "block", "keywordEnd"}},
+        {"statementWhile",       {"keywordWhile", "expressionBoolean", "do", "block", "keywordEnd"}},
+        {"statementAssignment",  {"identifier", "operatorAssignment", "expressionArithmetic"}},
+        {"statementPrint",       {"keywordPrint", "operatorParenL", "expressionArithmetic", "operatorParenR"}},
+        {"statementRepeat",      {"keywordRepeat", "block", "keywordUntil", "expressionBoolean"}},
+        {"expressionBoolean",    {"operatorsRelative", "expressionArithmetic", "expressionArithmetic"}},
+        {"expressionArithmetic", {"operatorParenL", "expressionArithmetic", "operatorParenR"}},
+        {"expressionArithmetic", {"expressionArithmetic", "expressionArithmetic"}},
+        {"expressionArithmetic", {"operatorsArithmetic", "integer", "integer"}},
+        {"expressionArithmetic", {"integer"}},
+        {"operatorsArithmetic",  {"operatorAdd"}},
+        {"operatorsArithmetic",  {"operatorSub"}},
+        {"operatorsArithmetic",  {"operatorMult"}},
+        {"operatorsArithmetic",  {"operatorDiv"}},
+        {"operatorsRelative",    {"operatorLessEq"}},
+        {"operatorsRelative",    {"operatorLess"}},
+        {"operatorsRelative",    {"operatorGreatEq"}},
+        {"operatorsRelative",    {"operatorGreat"}},
+        {"operatorsRelative",    {"operatorEqual"}},
+        {"operatorsRelative",    {"operatorNotEqual"}},
+        {"integer",              {"identifier"}},
+        {"integer",              {"integerLiteral"}}
 };
 
-// Links grammar definitions to token values if they're terminal symbols.
-const map<string, TokenValue> terminalSymbols {
-        {"id", identifier},
-        {"integer_literal",     integerLiteral},
-        {"operator_assignment", operatorAssignment},
-        {"operator_lessEq",     operatorLessEq},
-        {"operator_less",       operatorLess},
-        {"operator_greatEq",    operatorGreatEq},
-        {"operator_great",      operatorGreat},
-        {"operator_equal",      operatorEqual},
-        {"operator_notEqual",   operatorNotEqual},
-        {"operator_add",        operatorAdd},
-        {"operator_sub",        operatorSub},
-        {"operator_mult",       operatorMult},
-        {"operator_div",        operatorDiv},
-        {"paren_l",             operatorParenL},
-        {"paren_r",             operatorParenR},
-        {"function",            keywordFunction},
-        {"end",                 keywordEnd},
-        {"if",                  keywordIf},
-        {"then",                keywordThen},
-        {"else",                keywordElse},
-        {"while",               keywordWhile},
-        {"do",                  keywordDo},
-        {"repeat",              keywordRepeat},
-        {"until",               keywordUntil},
-        {"print",               keywordPrint}
-};
+// Returns vector of all possible definitions for a word.
+vector<vector<string>> findAllDefs(const string& word) {
+    vector<vector<string>> defs;
+    pair<defIter, defIter> matches = definitions.equal_range(word);
 
-// Returns the valid definition of the requested term/word.
-vector<string> getDefinition(const string& term, vector<Token*>* toks) {
-    vector<string> possibleDef = words.find(term) -> second;
+    for (auto curDef = matches.first; curDef != matches.second; curDef++) {
+        defs.push_back(curDef -> second);
+    }
+
+    return defs;
 }
+
+// Structure used in construction of parse tree.
+struct GrammarNode {
+    string word;                      // Grammar term being held by node.
+    bool isTerminal;                  // Flag for holding terminal value.
+    Token* tokenLink;                 // Links token to terminal value token.
+
+    explicit GrammarNode(const string& word_) {
+        word = word_;
+        isTerminal = false;
+        tokenLink = nullptr;
+    }
+
+    GrammarNode(const string& word_, Token* tokenLink_) {
+        word = word_;
+        isTerminal = true;
+        tokenLink = tokenLink_;
+    }
+
+    void linkWithToken(Token* token) {
+        isTerminal = true;
+        tokenLink = token;
+    }
+};
+
+// k-ary heap used to store grammar nodes needed to generate parse tree.
+struct karyHeap {
+    static const int k = 8;
+    GrammarNode* nodes[k*k * 2];
+
+    int getChildIndexStart(const int& curIndex) {
+        return (curIndex * k) + 1;
+    }
+
+    int getParentIndex(const int& curIndex) {
+        return (curIndex - 1) / k;
+    }
+} parseTree;

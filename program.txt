@@ -1,6 +1,6 @@
 // This is a test program
 
-function f()
-    a = 3
-    print(a)
+function a()
+    b = 3
+    print(- b (2 - 1))
 end
