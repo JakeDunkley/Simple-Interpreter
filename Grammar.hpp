@@ -22,9 +22,7 @@ typedef multimap<string, vector<string>>::const_iterator defIter;
 
 // This is the definitions of all words in the grammer.
 const multimap<string, vector<string>> definitions {
-        {"program",              {"functionHeader", "block", "keywordEnd"}},
         {"functionHeader",       {"keywordFunction", "identifier", "operatorParenL", "operatorParenR"}},
-        {"block",                {"statement", "block"}},
         {"statement",            {"statementIf"}},
         {"statement",            {"statementWhile"}},
         {"statement",            {"statementAssignment"}},
@@ -68,38 +66,20 @@ vector<vector<string>> findAllDefs(const string& word) {
 
 // Structure used in construction of parse tree.
 struct GrammarNode {
-    string word;                      // Grammar term being held by node.
-    bool isTerminal;                  // Flag for holding terminal value.
-    Token* tokenLink;                 // Links token to terminal value token.
+    string word;
+    GrammarNode* parent;
+    vector<GrammarNode*> children;
 
     explicit GrammarNode(const string& word_) {
         word = word_;
-        isTerminal = false;
-        tokenLink = nullptr;
+        parent = nullptr;
     }
 
-    GrammarNode(const string& word_, Token* tokenLink_) {
-        word = word_;
-        isTerminal = true;
-        tokenLink = tokenLink_;
+    void linkParent(GrammarNode* parent_) {
+        parent = parent_;
     }
 
-    void linkWithToken(Token* token) {
-        isTerminal = true;
-        tokenLink = token;
+    void addChild(GrammarNode* child) {
+        children.push_back(child);
     }
 };
-
-// k-ary heap used to store grammar nodes needed to generate parse tree.
-struct karyHeap {
-    static const int k = 8;
-    GrammarNode* nodes[k*k * 2];
-
-    int getChildIndexStart(const int& curIndex) {
-        return (curIndex * k) + 1;
-    }
-
-    int getParentIndex(const int& curIndex) {
-        return (curIndex - 1) / k;
-    }
-} parseTree;

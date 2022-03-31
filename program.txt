@@ -2,5 +2,5 @@
 
 function a()
     b = 3
-    print(- b (2 - 1))
+    print(+ b (- 4 2))
 end

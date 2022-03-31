@@ -11,12 +11,14 @@
 #include <vector>
 #include <string>
 #include <stack>
+#include <chrono>
 #include "Token.hpp"
 #include "Grammar.hpp"
 
 using namespace std;
 
-const bool debug = true;
+// Debug stuff
+const bool debugFlag = true;
 
 // Stream for incoming program file.
 fstream testFile("../program.txt");
@@ -65,7 +67,9 @@ void pushDefToStack(stack<string>* grammars, multimap<string, vector<string>>* d
 int main() {
 
     // Data needed for multiple sections.
-    map<string, int> registerVariables;
+    map<string, int> symbolTable;
+    auto debugTimerStart = chrono::steady_clock::now();
+    auto debugTimerEnd = chrono::steady_clock::now();
 
     /* ---------------- Lexical Analysis Section ---------------- */
 
@@ -79,6 +83,7 @@ int main() {
     // This area collects all non-ignored characters into a vector for easier parsing later.
     if (testFile.is_open()) {
         cout << "Start of lexical analysis..." << endl;
+        debugTimerStart = chrono::steady_clock::now();
 
         // Loop for extracting characters out of program file.
         while (testFile.get(charCurrent)) {
@@ -152,76 +157,58 @@ int main() {
     }
 
     // Show final tokens.
-    cout << "Generated " << tokens.size() << " tokens: " << endl;
+    debugTimerEnd = chrono::steady_clock::now();
+    auto debugTimerElapsed = chrono::duration<float, milli>(debugTimerEnd - debugTimerStart).count();
+    cout << "Generated " << tokens.size() << " tokens in " << debugTimerElapsed << "ms" << endl;
 
     for (Token* t : tokens) {
         t -> show();
     }
 
-    cout << "Lexical analysis done!" << endl;
+    cout << "Lexical analysis done!\n" << endl;
 
     /* ---------------- Parsing Section ---------------- */
 
     cout << "Start of parsing..." << endl;
 
     // All the data and variables needed for generating a parse tree.
-    int curTokenIndex = 0;
-    int curTreeIndex = 0, lastBranch = 0;
+    stack<string> parseStack;
+    GrammarNode parseTree("program");
 
-    parseTree.nodes[0] = new GrammarNode("program");
+    parseStack.push("end");
 
-    // Loop while tokens are still not used up.
-    while (curTokenIndex < tokens.size()) {
-
-        // Is the current tokens value a match to the current grammar node?
-        if (getTokenValueIdentifier(tokens[curTokenIndex] -> value) == parseTree.nodes[0] -> word) {
-            curTokenIndex++;
-        }
-
-        // If not, try to see if the word can be decomposed.
-        else {
-            vector<vector<string>> possibleDefs = findAllDefs(parseTree.nodes[curTreeIndex] -> word);
-
-            // If no definitions are found, there is a problem.
-            if (possibleDefs.empty()) {
-                cout << "NO POSSIBLE DEFINITIONS" << endl;
+    // Find how many statements were generated and add statement nodes to the stack and
+    // collect all identifiers into the symbol table.
+    for (Token* t : tokens) {
+        switch(t -> value) {
+            case (operatorAssignment):
+            case (keywordIf):
+            case (keywordWhile):
+            case (keywordRepeat):
+            case (keywordPrint):
+                parseStack.push("statement");
+                cout << "Found statement token (" << t -> toString() << ")." << endl;
                 break;
-            }
-
-            // Otherwise, find the definition that matches.
-            else {
-
-                // Check to see if the current token is a special case before searching for matching definition.
-                // NOTE: currently just functionHeader, block, and operatorsRelative.
-                if (parseTree.nodes[curTreeIndex] -> word == "functionHeader") {
-                    //TODO
-                }
-
-                else if (parseTree.nodes[curTreeIndex] -> word == "block") {
-                    //TODO
-                }
-
-                else if (parseTree.nodes[curTreeIndex] -> word == "operatorsRelative") {
-                    //TODO
-                }
-
-                for (vector<string>& curDef : possibleDefs) {
-
-                    // If a match is found, add the definition components as children to the current node and
-                    // move the current tree index to the first new child.
-                    if (getTokenValueIdentifier(tokens[curTokenIndex] -> value) == curDef[0]) {
-                        int newChildStart = parseTree.getChildIndexStart(curTreeIndex);
-
-                        for (int i = 0; i < curDef.size(); i++) {
-                            parseTree.nodes[newChildStart + i] = new GrammarNode(curDef[i]);
-                        }
-
-                        curTreeIndex = newChildStart;
-                        break;
-                    }
-                }
-            }
+            case (identifier):
+                symbolTable.insert(pair<string, int>(t -> lexeme, 0));
+                break;
+            default:
+                break;
         }
+    }
+
+    parseStack.push("functionHeader");
+
+    // Show final symbol table.
+    cout << "Added " << symbolTable.size() << " symbol" << (symbolTable.size() > 1 ? "s " : " ") << "to the symbol table." << endl;
+
+    for (pair<string, int> s : symbolTable) {
+        cout << s.first << endl;
+    }
+
+    // Main loop to construct parse tree.
+    while (!parseStack.empty()) {
+        // idk man this is so freaking difficult.
     }
 
     return 0;

@@ -150,6 +150,10 @@ struct Token {
         cout << "[ VALUE: " << setw(20) << left << getTokenValueIdentifier(value) + ", ";
         cout << "LEXEME: " << setw(11) << left << "\"" + lexeme + "\"" << "]" << endl;
     }
+
+    string toString() {
+        return (getTokenValueIdentifier(value) + " \"" + lexeme + "\"");
+    }
 };
 
 // (Semi) wrapper method for stoi that handles exception catching.
