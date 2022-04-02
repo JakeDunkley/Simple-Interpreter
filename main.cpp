@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <stack>
+#include <queue>
 #include <chrono>
 #include "Token.hpp"
 #include "Grammar.hpp"
@@ -67,7 +68,7 @@ void pushDefToStack(stack<string>* grammars, multimap<string, vector<string>>* d
 int main() {
 
     // Data needed for multiple sections.
-    map<string, int> symbolTable;
+    map<string, int> symbolTable; // Holds variable identifiers and their values.
     auto debugTimerStart = chrono::steady_clock::now();
     auto debugTimerEnd = chrono::steady_clock::now();
 
@@ -96,6 +97,7 @@ int main() {
                 }
 
                 registerOperator.clear();
+                tokens.push_back(new Token(endOfLine, ""));
                 continue;
             }
 
@@ -104,6 +106,7 @@ int main() {
                 checkRegisterLetters(registerLetters, tokens);
                 checkRegister(registerOperator, tokens);
                 checkRegister(registerLiteralInteger, tokens);
+                if (charCurrent == '\n') tokens.push_back(new Token(endOfLine, ""));
             }
 
             // Check if current character is a letter.
@@ -143,6 +146,12 @@ int main() {
                 tokens.push_back(new Token(badSymbol, curToString));
             }
 
+            // Just to remove unnecessary tokens.
+            // NOTE: If there were a situation where the program file had lots and lots of end of line
+            // characters at the beginning, this while cause problems as the tokens are not actually
+            // being deleted O_O
+            while (!tokens.empty() && tokens[0] -> value == endOfLine) tokens.pop_back();
+
         }
 
         // After reading the whole file, see if any registers have data left in them.
@@ -163,6 +172,16 @@ int main() {
 
     for (Token* t : tokens) {
         t -> show();
+        if (t -> value == badSymbol) {
+            cout << "Error: Bad symbol!" << endl;
+            return 0;
+        }
+    }
+
+    if (tokens[0] -> value != keywordFunction || tokens[1] -> value != identifier ||
+        tokens[2] -> value != operatorParenL || tokens[3] -> value != operatorParenR) {
+        cout << "Error: Bad function definition!" << endl;
+        return 0;
     }
 
     cout << "Lexical analysis done!\n" << endl;
@@ -171,33 +190,26 @@ int main() {
 
     cout << "Start of parsing..." << endl;
 
-    // All the data and variables needed for generating a parse tree.
-    stack<string> parseStack;
-    GrammarNode parseTree("program");
-
-    parseStack.push("end");
-
     // Find how many statements were generated and add statement nodes to the stack and
     // collect all identifiers into the symbol table.
-    for (Token* t : tokens) {
-        switch(t -> value) {
+    for (int i = 0; i < tokens.size(); i++) {
+        switch(tokens[i] -> value) {
             case (operatorAssignment):
             case (keywordIf):
             case (keywordWhile):
             case (keywordRepeat):
             case (keywordPrint):
-                parseStack.push("statement");
-                cout << "Found statement token (" << t -> toString() << ")." << endl;
+                cout << "Found statement token (" << tokens[i] -> toString() << ")." << endl;
                 break;
             case (identifier):
-                symbolTable.insert(pair<string, int>(t -> lexeme, 0));
+                if (i > 0 && tokens[i - 1] -> value != keywordFunction) {
+                    symbolTable.insert(pair<string, int>(tokens[i] -> lexeme, 0));
+                }
                 break;
             default:
                 break;
         }
     }
-
-    parseStack.push("functionHeader");
 
     // Show final symbol table.
     cout << "Added " << symbolTable.size() << " symbol" << (symbolTable.size() > 1 ? "s " : " ") << "to the symbol table." << endl;
@@ -206,10 +218,114 @@ int main() {
         cout << s.first << endl;
     }
 
-    // Main loop to construct parse tree.
-    while (!parseStack.empty()) {
-        // idk man this is so freaking difficult.
+    // Step 0: Parse function definition out of rest of linesTokens.
+    // Step 1: Parse all linesTokens.
+        // a) Get each line (seperated by EOLs) and divide them into queues.
+        // b) LR parse each queue and build a GrammarNode tree for each queue.
+    // Step 2: Combine the GrammarNode trees of related linesTokens (i.e. if, else, end).
+        // a) Find start of multi-line structures.
+        // b) Identify linesTokens that should be below it.
+        // c) Link the root of lower grammar trees to the root of the top tree.
+    // Step 3: ??
+    // Step 4: Profit
+
+    /* ---------------- ---------------- ---------------- */
+
+    // All the data and variables needed for generating a parse tree.
+    GrammarNode parseTree("program");
+    queue<queue<Token*>> linesTokens;
+    queue<GrammarNode*> linesNodes;
+
+    // Step 0: Parse function definition out of rest of linesTokens.
+    // Step 1: Parse all linesTokens.
+    // 1a) Get each line (seperated by EOLs) and divide them into queues.
+    queue<Token*>* curLine = new queue<Token*>;
+
+    for (Token* t : tokens) {
+        if (t -> value == endOfLine) {
+            linesTokens.push(*curLine);
+            delete curLine;
+            curLine = new queue<Token*>;
+        }
+
+        else {
+            curLine -> push(t);
+        }
     }
+
+    linesTokens.push(*curLine);
+    delete curLine;
+
+    // 1b) LR parse each queue and build a GrammarNode tree for each queue.
+     while (!linesTokens.empty()) {
+         queue<Token*> curQueue = linesTokens.front();
+         GrammarNode *curNode = nullptr;
+
+         while (!curQueue.empty()) {
+             switch (curQueue.front()->value) {
+                 case identifier:
+                     curNode = new GrammarNode("statementAssignment");
+                     curNode -> addChild(new GrammarNode(curQueue.front()));
+                     curQueue.pop();
+
+                     if (curQueue.front() -> value == operatorAssignment) {
+                         curQueue.pop();
+                         curNode -> addChild(getNodeFromArithmetic(curQueue));
+                     }
+
+                     else {
+                         cout << "Error: Bad assignment operation!" << endl;
+                     }
+                     break;
+
+                 case keywordEnd:
+                     if (curNode != nullptr) curNode -> addChild(new GrammarNode("end"));
+                     break;
+
+                 case keywordIf:
+                     curNode = new GrammarNode("statementIf");
+                     curNode -> addChild(new GrammarNode(curQueue.front()));
+                     curQueue.pop();
+                     curNode -> addChild(getNodeFromArithmetic(curQueue));
+                     break;
+
+                 case keywordElse:
+                     curNode = new GrammarNode("statementElse");
+                     curNode -> addChild(new GrammarNode(curQueue.front()));
+                     curQueue.pop();
+                     break;
+
+                 case keywordWhile:
+                     curNode = new GrammarNode("statementWhile");
+                     curNode -> addChild(new GrammarNode(curQueue.front()));
+                     curQueue.pop();
+                     curNode -> addChild(getNodeFromArithmetic(curQueue));
+                     break;
+
+                 case keywordRepeat:
+                     curNode = new GrammarNode("statementRepeat");
+                     curNode -> addChild(new GrammarNode(curQueue.front()));
+                     curQueue.pop();
+                     break;
+
+                 case keywordPrint:
+                     curNode = new GrammarNode("statementPrint");
+                     curNode -> addChild(new GrammarNode(curQueue.front()));
+                     curQueue.pop();
+                     curNode -> addChild(getNodeFromArithmetic(curQueue));
+                     break;
+
+                 default:
+                     break;
+             }
+         }
+    }
+    // Step 2: Combine the GrammarNode trees of related linesTokens (i.e. if, else, end).
+        // a) Find start of multi-line structures.
+        // b) Identify linesTokens that should be below it.
+        // c) Link the root of lower grammar trees to the root of the top tree.
+    // Step 3: ??
+    // Step 4: Profit
 
     return 0;
 }

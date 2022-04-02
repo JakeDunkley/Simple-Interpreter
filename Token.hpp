@@ -17,6 +17,7 @@ using namespace std;
 
 // Used for labeling tokens that are later passed to the parser.
 typedef enum {
+    endOfLine          = -2,
     badSymbol          = -1,
     identifier         =  0,
     integerLiteral     =  1,
@@ -79,6 +80,8 @@ const map<string, TokenValue> keywords {
 // Returns TokenValue enum identifier. Just for debugging.
 string getTokenValueIdentifier(const TokenValue& v) {
     switch(v) {
+        case endOfLine:
+            return "endOfLine";
         case badSymbol:
             return "badSymbol";
         case identifier:

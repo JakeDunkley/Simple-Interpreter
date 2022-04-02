@@ -17,62 +17,49 @@
 
 using namespace std;
 
-// This is used later to find all matches to a certain word.
-typedef multimap<string, vector<string>>::const_iterator defIter;
-
-// This is the definitions of all words in the grammer.
-const multimap<string, vector<string>> definitions {
-        {"functionHeader",       {"keywordFunction", "identifier", "operatorParenL", "operatorParenR"}},
-        {"statement",            {"statementIf"}},
-        {"statement",            {"statementWhile"}},
-        {"statement",            {"statementAssignment"}},
-        {"statement",            {"statementPrint"}},
-        {"statement",            {"statementRepeat"}},
-        {"statementIf",          {"keywordIf", "expressionBoolean", "keywordThen", "block", "keywordElse", "block", "keywordEnd"}},
-        {"statementWhile",       {"keywordWhile", "expressionBoolean", "do", "block", "keywordEnd"}},
-        {"statementAssignment",  {"identifier", "operatorAssignment", "expressionArithmetic"}},
-        {"statementPrint",       {"keywordPrint", "operatorParenL", "expressionArithmetic", "operatorParenR"}},
-        {"statementRepeat",      {"keywordRepeat", "block", "keywordUntil", "expressionBoolean"}},
-        {"expressionBoolean",    {"operatorsRelative", "expressionArithmetic", "expressionArithmetic"}},
-        {"expressionArithmetic", {"operatorParenL", "expressionArithmetic", "operatorParenR"}},
-        {"expressionArithmetic", {"expressionArithmetic", "expressionArithmetic"}},
-        {"expressionArithmetic", {"operatorsArithmetic", "integer", "integer"}},
-        {"expressionArithmetic", {"integer"}},
-        {"operatorsArithmetic",  {"operatorAdd"}},
-        {"operatorsArithmetic",  {"operatorSub"}},
-        {"operatorsArithmetic",  {"operatorMult"}},
-        {"operatorsArithmetic",  {"operatorDiv"}},
-        {"operatorsRelative",    {"operatorLessEq"}},
-        {"operatorsRelative",    {"operatorLess"}},
-        {"operatorsRelative",    {"operatorGreatEq"}},
-        {"operatorsRelative",    {"operatorGreat"}},
-        {"operatorsRelative",    {"operatorEqual"}},
-        {"operatorsRelative",    {"operatorNotEqual"}},
-        {"integer",              {"identifier"}},
-        {"integer",              {"integerLiteral"}}
+// This is the definitions of all words in the grammar.
+const map<vector<string>, string> definitions {
+        {{"identifier"}, "number"},
+        {{"integerLiteral"}, "number"},
+        {{"number"}, "expressionArithmetic"},
+        {{"(", "expressionArithmetic", ")"}, "expressionArithmetic"},
+        {{"operatorAdd"}, "operatorArithmetic"},
+        {{"operatorSub"}, "operatorArithmetic"},
+        {{"operatorMult"}, "operatorArithmetic"},
+        {{"operatorDiv"}, "operatorArithmetic"},
+        {{"operatorArithmetic", "expressionArithmetic", "expressionArithmetic"}, "expressionArithmetic"},
+        {{"operatorLessEq"}, "operatorRelative"},
+        {{"operatorLess"}, "operatorRelative"},
+        {{"operatorGreatEq"}, "operatorRelative"},
+        {{"operatorGreat"}, "operatorRelative"},
+        {{"operatorEqual"}, "operatorRelative"},
+        {{"operatorNotEqual"}, "operatorRelative"},
+        {{"operatorRelative", "expressionArithmetic", "expressionArithmetic"}, "expressionBoolean"},
+        {{"identifier", "operatorAssignment", "expressionArithmetic"}, "statementAssignment"},
+        {{"keywordPrint", "(", "expressionArithmetic", ")"}, "statementPrint"},
+        {{"keywordIf", "expressionBoolean", "keywordThen"}, "statementIf"},
 };
-
-// Returns vector of all possible definitions for a word.
-vector<vector<string>> findAllDefs(const string& word) {
-    vector<vector<string>> defs;
-    pair<defIter, defIter> matches = definitions.equal_range(word);
-
-    for (auto curDef = matches.first; curDef != matches.second; curDef++) {
-        defs.push_back(curDef -> second);
-    }
-
-    return defs;
-}
 
 // Structure used in construction of parse tree.
 struct GrammarNode {
     string word;
     GrammarNode* parent;
     vector<GrammarNode*> children;
+    bool isTerminal;
+    Token* tokenLink;
 
     explicit GrammarNode(const string& word_) {
         word = word_;
         parent = nullptr;
+        isTerminal = false;
+        tokenLink = nullptr;
+    }
+
+    explicit GrammarNode(Token* token) {
+        word = getTokenValueIdentifier(token -> value);
+        parent = nullptr;
+        isTerminal = true;
+        tokenLink = token;
     }
 
     void linkParent(GrammarNode* parent_) {
@@ -81,5 +68,86 @@ struct GrammarNode {
 
     void addChild(GrammarNode* child) {
         children.push_back(child);
+        child -> parent = this;
     }
 };
+
+// Creates a grammar node tree from a queue of arithmetic-related tokens.
+GrammarNode* getNodeFromArithmetic(queue<Token*>& arithTokens, string statType = "statementArithmetic") {
+    GrammarNode* toReturn = new GrammarNode(statType);
+
+    while (!arithTokens.empty()) {
+
+        switch(arithTokens.front() -> value) {
+            case operatorAdd:
+            case operatorSub:
+            case operatorMult:
+            case operatorDiv: {
+                GrammarNode* opArithNode = new GrammarNode("operatorArithmetic");
+                opArithNode -> addChild(new GrammarNode(arithTokens.front()));
+                toReturn -> addChild(opArithNode);
+                break;
+            }
+
+            case identifier:
+            case integerLiteral: {
+                GrammarNode* numNode = new GrammarNode("number");
+                numNode -> addChild(new GrammarNode(arithTokens.front()));
+                toReturn -> addChild(numNode);
+                break;
+            }
+
+            case operatorParenL: {
+                arithTokens.pop();
+
+                switch(arithTokens.front() -> value) {
+                    case operatorLessEq:
+                    case operatorLess:
+                    case operatorGreatEq:
+                    case operatorGreat:
+                    case operatorEqual:
+                    case operatorNotEqual: {
+                        toReturn -> addChild(getNodeFromArithmetic(arithTokens, "statementBoolean"));
+                    }
+
+                    case operatorAdd:
+                    case operatorSub:
+                    case operatorMult:
+                    case operatorDiv: {
+                        toReturn -> addChild(getNodeFromArithmetic(arithTokens));
+                    }
+
+                    default:
+                        break;
+                }
+
+                toReturn -> addChild(getNodeFromArithmetic(arithTokens));
+                break;
+            }
+
+            case operatorParenR: {
+                return toReturn;
+            }
+
+            case keywordThen:
+                toReturn -> addChild(new GrammarNode("keywordThen"));
+                break;
+
+            case keywordDo:
+                toReturn -> addChild(new GrammarNode("keywordDo"));
+                break;
+
+            case keywordUntil:
+                toReturn -> addChild(new GrammarNode("keywordUntil"));
+                break;
+
+            default:
+                break;
+
+        }
+
+        arithTokens.pop();
+    }
+
+    return toReturn;
+}
