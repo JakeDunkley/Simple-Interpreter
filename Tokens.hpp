@@ -3,7 +3,7 @@
  * Term:        Spring 2022
  * Name:        Jake Dunkley
  * Instructor:  Sharon Perry
- * Project:     Deliverable P2 Parser
+ * Project:     Complete Interpreter
  */
 
 #pragma once
@@ -14,6 +14,13 @@
 #include <map>
 
 using namespace std;
+
+namespace Tokens {
+    const string charsIgnore = "\n\t\r ";                       // Characters that should be ignored.
+    const string charsLetters = "abcdefghijklmnopqrstuvwxyz";   // Characters that are valid for building an identifier.
+    const string charsOperator = "=~<>*/-+()";                  // Characters that are valid for building an identifier.
+    const string charsLiteralInteger = "0123456789";            // Characters that are valid for building an integer literal.
+}
 
 // Used for labeling tokens that are later passed to the parser.
 typedef enum {
