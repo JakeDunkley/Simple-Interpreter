@@ -9,14 +9,14 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "Tokens.hpp"
+#include "tokens.hpp"
 
 using namespace std;
 
 // Checks if a register is occupied, and creates a new token if so.
-bool checkRegister(string& reg, vector<Token*>& toks) {
+bool checkRegister(string& reg, vector<Token*>& tokens) {
     if (!reg.empty()) {
-        toks.push_back(createNewToken(reg));
+        tokens.push_back(createNewToken(reg));
         reg.clear();
         return true;
     }
@@ -27,14 +27,14 @@ bool checkRegister(string& reg, vector<Token*>& toks) {
 // Checks if the letter register is occupied, and creates a new token if so.
 // Has special rules for creating an identifier or a keyword.
 // NOTE: this is a bool for debugging purposes. Could be changed but ehh.
-bool checkRegisterLetters(string& reg, vector<Token*>& toks) {
+bool checkRegisterLetters(string& reg, vector<Token*>& tokens) {
     if (!reg.empty()) {
         if (reg.size() == 1) {
-            toks.push_back(new Token(identifier, reg));
+            tokens.push_back(new Token(tokens::identifier, reg));
         }
 
         else {
-            toks.push_back(createNewToken(reg));
+            tokens.push_back(createNewToken(reg));
         }
 
         reg.clear();
@@ -49,7 +49,7 @@ int main() {
     // Stream for incoming program file.
     fstream testFile("../program.jl");
 
-    /* ---------------- Lexical Analysis Section ---------------- */
+    /* ---------------- ---------------- Lexical Analysis Section ---------------- ---------------- */
 
     // All data and variables needed for building tokens from file.
     vector<Token*> tokens;          // Holds finished token information for later use.
@@ -73,28 +73,34 @@ int main() {
                 }
 
                 registerOperator.clear();
-                tokens.push_back(new Token(endOfLine, ""));
+                tokens.push_back(new Token(tokens::endOfLine, ""));
                 continue;
             }
 
-            // Check if current character should be ignored.
-            if (Tokens::charsIgnore.find(charCurrent) != string::npos) {
+            // Check if current character should be ignored and
+            // if end of line token should be added.
+            if (tokens::charsIgnore.find(charCurrent) != string::npos) {
                 checkRegisterLetters(registerLetters, tokens);
                 checkRegister(registerOperator, tokens);
                 checkRegister(registerLiteralInteger, tokens);
-                if (charCurrent == '\n') tokens.push_back(new Token(endOfLine, ""));
+
+                // Add new end of line character only if there isn't a duplicate. Only one
+                // is necessary to define where lines end, more just gunks up the parser.
+                if (charCurrent == '\n' && tokens.back() -> value != tokens::endOfLine) {
+                    tokens.push_back(new Token(tokens::endOfLine, ""));
+                }
             }
 
-                // Check if current character is a letter.
-            else if (Tokens::charsLetters.find(charCurrent) != string::npos) {
+            // Check if current character is a letter.
+            else if (tokens::charsLetters.find(charCurrent) != string::npos) {
                 checkRegister(registerOperator, tokens);
                 checkRegister(registerLiteralInteger, tokens);
 
                 registerLetters.push_back(charCurrent);
             }
 
-                // Check if current character is an operator.
-            else if (Tokens::charsOperator.find(charCurrent) != string::npos) {
+            // Check if current character is an operator.
+            else if (tokens::charsOperator.find(charCurrent) != string::npos) {
                 checkRegisterLetters(registerLetters, tokens);
                 checkRegister(registerLiteralInteger, tokens);
 
@@ -108,25 +114,25 @@ int main() {
                 }
             }
 
-                // Check if current character is an integer.
-            else if (Tokens::charsLiteralInteger.find(charCurrent) != string::npos) {
+            // Check if current character is an integer.
+            else if (tokens::charsLiteralInteger.find(charCurrent) != string::npos) {
                 checkRegisterLetters(registerLetters, tokens);
                 checkRegister(registerOperator, tokens);
 
                 registerLiteralInteger.push_back(charCurrent);
             }
 
-                // Otherwise, create a bad symbol token.
+            // Otherwise, create a bad symbol token.
             else {
                 string curToString{string() + charCurrent};
-                tokens.push_back(new Token(badSymbol, curToString));
+                tokens.push_back(new Token(tokens::badSymbol, curToString));
             }
 
-            // Just to remove unnecessary tokens.
-            // NOTE: If there were a situation where the program file had lots and lots of end of line
-            // characters at the beginning, this while cause problems as the tokens are not actually
-            // being deleted O_O
-            while (!tokens.empty() && tokens[0] -> value == endOfLine) tokens.pop_back();
+            // Just to remove unnecessary tokens that may add up on the top of the file.
+            while (!tokens.empty() && tokens[0] -> value == tokens::endOfLine) {
+                delete tokens.back();
+                tokens.pop_back();
+            }
 
         }
 
@@ -136,7 +142,7 @@ int main() {
         checkRegister(registerLiteralInteger, tokens);
     }
 
-        // If there's a problem opening the file, display a message.
+    // If there's a problem opening the file, display a message.
     else {
         cout << "There was a problem opening the source file." << endl;
     }
@@ -146,7 +152,8 @@ int main() {
 
     for (Token* t : tokens) {
         t -> show();
-        if (t -> value == badSymbol) {
+
+        if (t -> value == tokens::badSymbol) {
             cout << "Error: Bad symbol!" << endl;
             return 0;
         }
