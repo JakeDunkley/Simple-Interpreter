@@ -1,12 +1,3 @@
-// This is a test program.
+// This is a test arithmetic expression
 
-function a()
-    b = - 4 1
-
-    if > b 2 then
-        print(b)
-    else
-        b = + b 1 // This is a comment.
-        print(* (+ 5 4) b)
-    end
-end
++ (- b (* 2 4)) 3

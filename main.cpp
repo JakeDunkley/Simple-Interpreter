@@ -10,6 +10,7 @@
 #include <fstream>
 #include <vector>
 #include "tokens.hpp"
+#include "grammar.hpp"
 
 using namespace std;
 
@@ -57,6 +58,9 @@ int main() {
     string registerLetters;         // Holds char(s) of keyword or identifier being built.
     string registerOperator;        // Holds chars of operator being built.
     string registerLiteralInteger;  // Holds chars of integer being built.
+    // Variables needed for throwing error(s).
+    string registerLine;            // Holds chars in current line.
+    int lineIndex;                  // Keeps track of current index on current line.
 
     // This area collects all non-ignored characters into a vector for easier parsing later.
     if (testFile.is_open()) {
@@ -160,6 +164,16 @@ int main() {
     }
 
     cout << "Lexical analysis done!\n" << endl;
+
+    /* ---------------- ---------------- Parser Section ---------------- ---------------- */
+
+    queue<Token*> testQueue;
+
+    for (Token* t : tokens) {
+        testQueue.push(t);
+    }
+
+    GrammarNode* test = createNodeExpressionArithmetic(testQueue);
 
     return 0;
 }

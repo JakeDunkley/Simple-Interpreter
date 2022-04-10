@@ -13,13 +13,11 @@
 #include <string>
 #include <map>
 
-using namespace std;
-
 namespace tokens {
-    const string charsIgnore = "\n\t\r ";                       // Characters that should be ignored.
-    const string charsLetters = "abcdefghijklmnopqrstuvwxyz";   // Characters that are valid for building an identifier.
-    const string charsOperator = "=~<>*/-+()";                  // Characters that are valid for building an identifier.
-    const string charsLiteralInteger = "0123456789";            // Characters that are valid for building an integer literal.
+    const std::string charsIgnore = "\n\t\r ";                       // Characters that should be ignored.
+    const std::string charsLetters = "abcdefghijklmnopqrstuvwxyz";   // Characters that are valid for building an identifier.
+    const std::string charsOperator = "=~<>*/-+()";                  // Characters that are valid for building an identifier.
+    const std::string charsLiteralInteger = "0123456789";            // Characters that are valid for building an integer literal.
 
     // Used for labeling tokens that are later passed to the parser.
     typedef enum {
@@ -53,7 +51,7 @@ namespace tokens {
     } TokenValue;
 
     // Defines link between operator lexemes and their token values.
-    const map<string, TokenValue> operators {
+    const std::map<std::string, TokenValue> operators {
             {"=",  operatorAssignment},
             {"<=",  operatorLessEq},
             {"<",  operatorLess},
@@ -70,7 +68,7 @@ namespace tokens {
     };
 
     // Defines link between keyword lexemes and their token values.
-    const map<string, TokenValue> keywords {
+    const std::map<std::string, TokenValue> keywords {
             {"function", keywordFunction},
             {"end",      keywordEnd},
             {"if",       keywordIf},
@@ -84,8 +82,18 @@ namespace tokens {
     };
 }
 
+// Used by parser to check symbol type.
+bool isOperatorArithmetic(tokens::TokenValue value) {
+    return (value >= 9 && value <= 12);
+}
+
+// Used by parser to check symbol type.
+bool isOperatorRelative(tokens::TokenValue value) {
+    return (value >= 3 && value <= 8);
+}
+
 // Returns TokenValue enum identifier. Just for debugging.
-string getTokenValueIdentifier(const tokens::TokenValue& v) {
+std::string getTokenValueIdentifier(const tokens::TokenValue& v) {
     switch(v) {
         case tokens::endOfLine:
             return "endOfLine";
@@ -149,25 +157,25 @@ string getTokenValueIdentifier(const tokens::TokenValue& v) {
 // Structure to hold token values.
 struct Token {
     tokens::TokenValue value;   // Holds the type of token.
-    string lexeme;              // Holds the actual contents of the token.
+    std::string lexeme;              // Holds the actual contents of the token.
 
-    Token(tokens::TokenValue value_, const string& lexeme_) {
+    Token(tokens::TokenValue value_, const std::string& lexeme_) {
         value = value_;
         lexeme = lexeme_;
     }
 
     void show() {
-        cout << "[ VALUE: " << setw(20) << left << getTokenValueIdentifier(value) + ", ";
-        cout << "LEXEME: " << setw(11) << left << "\"" + lexeme + "\"" << "]" << endl;
+        std::cout << "[ VALUE: " << std::setw(20) << std::left << getTokenValueIdentifier(value) + ", ";
+        std::cout << "LEXEME: " << std::setw(11) << std::left << "\"" + lexeme + "\"" << "]" << std::endl;
     }
 
-    string toString() {
+    std::string toString() {
         return (getTokenValueIdentifier(value) + " \"" + lexeme + "\"");
     }
 };
 
 // (Semi) wrapper method for stoi that handles exception catching.
-int* stringToInteger(const string& str) {
+int* stringToInteger(const std::string& str) {
     int* toReturn = nullptr;
 
     try {
@@ -175,13 +183,13 @@ int* stringToInteger(const string& str) {
         return toReturn;
     }
 
-    catch (exception& e) {
+    catch (std::exception& e) {
         return toReturn;
     }
 }
 
 // Easy way to find if a token lexeme is valid.
-tokens::TokenValue lookupToken(const string& lexeme) {
+tokens::TokenValue lookupToken(const std::string& lexeme) {
     if (tokens::operators.find(lexeme) != tokens::operators.end()) {
         return tokens::operators.find(lexeme) -> second;
     }
@@ -198,12 +206,12 @@ tokens::TokenValue lookupToken(const string& lexeme) {
 }
 
 // Creates a new token from a string lexeme.
-Token* createNewToken(string& lexeme) {
+Token* createNewToken(std::string& lexeme) {
     return new Token{lookupToken(lexeme), lexeme};
 }
 
 // Creates a new token from a char lexeme.
 Token* createNewToken(char& lexeme) {
-    string lexToString{string() + lexeme};
+    std::string lexToString{std::string() + lexeme};
     return new Token{lookupToken(lexToString), lexToString};
 }
