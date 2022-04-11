@@ -30,6 +30,7 @@ bool checkRegister(string& reg, vector<Token*>& tokens) {
 // NOTE: this is a bool for debugging purposes. Could be changed but ehh.
 bool checkRegisterLetters(string& reg, vector<Token*>& tokens) {
     if (!reg.empty()) {
+
         if (reg.size() == 1) {
             tokens.push_back(new Token(tokens::identifier, reg));
         }
@@ -173,7 +174,8 @@ int main() {
         testQueue.push(t);
     }
 
-    GrammarNode* test = createNodeExpressionArithmetic(testQueue);
+    testQueue.pop();
+    GrammarNode* test = createNodeStatementPrint(testQueue);
 
     return 0;
 }

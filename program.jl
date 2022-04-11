@@ -1,3 +1,3 @@
 // This is a test arithmetic expression
 
-+ (- b (* 2 4)) 3
+print(+ (- b 1) (* 2 3))

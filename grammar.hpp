@@ -91,7 +91,6 @@ GrammarNode* createNodeFunctionHeader(Token* identToken) {
 
 // Recursive function used to construct arithmetic expression node trees.
 GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
-    std::cout << "Recurse!" << std::endl;
 
     GrammarNode* toReturn = new GrammarNode(grammar::expressionArithmetic);
 
@@ -155,7 +154,7 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
 
             // If the expression does not have the min # of args, this is a problem.
             if (toReturn -> children.size() < 3) {
-                throw std::runtime_error("Error: Arithmetic expression: Not enough arguments.");
+                throw std::runtime_error("Error: Arithmetic expression: Parenthesis mismatch.");
             }
 
             else {
@@ -177,4 +176,30 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
     }
 
     else return toReturn;
+}
+
+// Function to create a print statement node group.
+GrammarNode* createNodeStatementPrint(std::queue<Token*>& tokens) {
+    // if the exprAr is not contained in parens, throw an error as the grammar does not permit this.
+    if (tokens.front() -> value != tokens::operatorParenL || tokens.back() -> value != tokens::operatorParenR) {
+        throw std::runtime_error("Error: Print statement: Poorly formed print statement.");
+    }
+
+    // If we're good, remove the front and back parens to generate the exprAr.
+    else {
+        tokens.pop();
+
+        std::queue<Token*> tokensSansParens;
+        while (tokens.size() > 1) {
+            tokensSansParens.push(tokens.front());
+            tokens.pop();
+        }
+
+        tokens = tokensSansParens;
+    }
+
+    GrammarNode* nodePrintStatement = new GrammarNode(grammar::statementPrint);
+    nodePrintStatement -> addChildDirect(createNodeExpressionArithmetic(tokens));
+
+    return nodePrintStatement;
 }

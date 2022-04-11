@@ -157,7 +157,7 @@ std::string getTokenValueIdentifier(const tokens::TokenValue& v) {
 // Structure to hold token values.
 struct Token {
     tokens::TokenValue value;   // Holds the type of token.
-    std::string lexeme;              // Holds the actual contents of the token.
+    std::string lexeme;         // Holds the actual contents of the token.
 
     Token(tokens::TokenValue value_, const std::string& lexeme_) {
         value = value_;
