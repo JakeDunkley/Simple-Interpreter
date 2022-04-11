@@ -37,6 +37,47 @@ namespace grammar {
     } GrammarValue;
 }
 
+std::string getGrammarNodeIdentifier(const grammar::GrammarValue& value) {
+    switch(value) {
+        case grammar::program:
+            return "program";
+        case grammar::block:
+            return "block";
+        case grammar::statement:
+            return "stat";
+        case grammar::functionHeader:
+            return "funcHead";
+        case grammar::end:
+            return "end";
+        case grammar::assignment:
+            return "assignment";
+        case grammar::expressionArithmetic:
+            return "exprAr";
+        case grammar::expressionBoolean:
+            return "exprBool";
+        case grammar::statementPrint:
+            return "statPrint";
+        case grammar::statementIf:
+            return "statIf";
+        case grammar::branchElse:
+            return "branchElse";
+        case grammar::statementWhile:
+            return "statWhile";
+        case grammar::statementRepeat:
+            return "statRepeat";
+        case grammar::branchUntil:
+            return "branchUntil";
+        case grammar::terminalIdentifier:
+            return "termIdent";
+        case grammar::terminalIntegerLiteral:
+            return "termIntLit";
+        case grammar::terminalOperatorArithmetic:
+            return "termOpAr";
+        case grammar::terminalOperatorRelative:
+            return "termOpRel";
+    }
+}
+
 struct GrammarNode {
     grammar::GrammarValue value;        // The value of the node.
     GrammarNode* parent;                // Points to a parent node if the node has one.
@@ -70,6 +111,25 @@ struct GrammarNode {
         children.push_back(child);
     }
 
+    void show(int depth = 0) {
+        const int spacing = 8;
+
+        for (int i = 0; i < depth; i++) {
+            std::cout << std::setw(spacing) << std::right << "|";
+        }
+
+        std::cout << "_";
+        if (isTerminal) std::cout << linkedToken -> toString();
+        else std::cout << getGrammarNodeIdentifier(value) << std::endl;
+
+        if (!children.empty()) {
+            for (int i = 0; i < children.size(); i++) {
+                children[i] -> show(depth + 1);
+                if (i < children.size() - 1) std::cout << std::endl;
+            }
+        }
+    }
+
     ~GrammarNode() {
         if (!children.empty()) {
             for (GrammarNode* c : children) {
@@ -90,9 +150,10 @@ GrammarNode* createNodeFunctionHeader(Token* identToken) {
 }
 
 // Recursive function used to construct arithmetic expression node trees.
+// NOTE: fix this lmao so it works with 'createNodeExpressionBoolean'
 GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
 
-    GrammarNode* toReturn = new GrammarNode(grammar::expressionArithmetic);
+    GrammarNode* nodeExprAr = new GrammarNode(grammar::expressionArithmetic);
 
     // Loop until list of tokens associated with exprAr are used up.
     while (!tokens.empty()) {
@@ -101,13 +162,13 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
         if (isOperatorArithmetic(tokens.front() -> value)) {
 
             // If the exprArith node already has an operator attached, then another operator is a problem.
-            if (!toReturn -> children.empty()) {
+            if (!nodeExprAr -> children.empty()) {
                 throw std::runtime_error("Error: Arithmetic expression: Too many operators.");
             }
 
             // Otherwise, add it to the node, and continue to the next token.
             else {
-                toReturn -> addChildTerminal(grammar::terminalOperatorArithmetic, tokens.front());
+                nodeExprAr -> addChildTerminal(grammar::terminalOperatorArithmetic, tokens.front());
             }
         }
 
@@ -115,13 +176,13 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
         else if (tokens.front() -> value == tokens::identifier) {
 
             // If the current exprAr node does not have an operator child yet, this is a problem.
-            if (toReturn -> children.empty()) {
+            if (nodeExprAr -> children.empty()) {
                 throw std::runtime_error("Error: Arithmetic expression: Adding identifier with no operator.");
             }
 
             // Otherwise, add it do the node, and continue to the next token.
             else {
-                toReturn -> addChildTerminal(grammar::terminalIdentifier, tokens.front());
+                nodeExprAr -> addChildTerminal(grammar::terminalIdentifier, tokens.front());
             }
         }
 
@@ -129,13 +190,13 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
         else if (tokens.front() -> value == tokens::integerLiteral) {
 
             // If the current exprAr node does not have an operator child yet, this is a problem.
-            if (toReturn -> children.empty()) {
+            if (nodeExprAr -> children.empty()) {
                 throw std::runtime_error("Error: Arithmetic expression: Adding literal with no operator.");
             }
 
             // Otherwise, add it do the node, and continue to the next token.
             else {
-                toReturn -> addChildTerminal(grammar::terminalIntegerLiteral, tokens.front());
+                nodeExprAr -> addChildTerminal(grammar::terminalIntegerLiteral, tokens.front());
             }
         }
 
@@ -145,7 +206,7 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
             tokens.pop();
 
             GrammarNode* nestedExprAr = createNodeExpressionArithmetic(tokens);
-            toReturn -> addChildDirect(nestedExprAr);
+            nodeExprAr -> addChildDirect(nestedExprAr);
         }
 
         // Check if current token is a right parenthesis.
@@ -153,12 +214,12 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
         else if (tokens.front() -> value == tokens::operatorParenR) {
 
             // If the expression does not have the min # of args, this is a problem.
-            if (toReturn -> children.size() < 3) {
+            if (nodeExprAr -> children.size() < 3) {
                 throw std::runtime_error("Error: Arithmetic expression: Parenthesis mismatch.");
             }
 
             else {
-                return toReturn;
+                return nodeExprAr;
             }
         }
 
@@ -171,23 +232,47 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
     }
 
     // Once the queue has been emptied, check that the final node has the min # of args required.
-    if (toReturn -> children.size() < 3) {
+    if (nodeExprAr -> children.size() < 3) {
         throw std::runtime_error("Error: Arithmetic expression: Not enough arguments.");
     }
 
-    else return toReturn;
+    else return nodeExprAr;
+}
+
+// Function to construct boolean expression node tree.
+GrammarNode* createNodeExpressionBoolean(std::queue<Token*>& tokens) {
+    GrammarNode* nodeExprBool = new GrammarNode(grammar::expressionBoolean);
+
+    // Front of exprBool MUST be an opRel, so if it's not we throw an error.
+    if (!isOperatorRelative(tokens.front() -> value)) {
+        throw std::runtime_error("Error: Boolean expression: No relative operator found.");
+    }
+
+    nodeExprBool -> addChildTerminal(grammar::terminalOperatorRelative, tokens.front());
+    tokens.pop();
+
+    while (!tokens.empty()) nodeExprBool -> addChildDirect(createNodeExpressionArithmetic(tokens));
+
+    // If at the end of generating the exprArs, if there are more than 2, throw an error.
+    if (nodeExprBool -> children.size() > 3) {
+        throw std::runtime_error("Error: Boolean expression: More arguments than allowed.");
+    }
+
+    return nodeExprBool;
 }
 
 // Function to create a print statement node group.
 GrammarNode* createNodeStatementPrint(std::queue<Token*>& tokens) {
-    // if the exprAr is not contained in parens, throw an error as the grammar does not permit this.
-    if (tokens.front() -> value != tokens::operatorParenL || tokens.back() -> value != tokens::operatorParenR) {
+    // if the exprAr is not contained in parens or started with print, throw an error as the grammar does not permit this.
+    if (tokens.front() -> value != tokens::keywordPrint || tokens.back() -> value != tokens::operatorParenR) {
         throw std::runtime_error("Error: Print statement: Poorly formed print statement.");
     }
 
-    // If we're good, remove the front and back parens to generate the exprAr.
+    // If we're good, remove the print token, the front and back parens & generate the exprAr.
     else {
         tokens.pop();
+        if (tokens.front() -> value != tokens::operatorParenL) throw std::runtime_error("Error: Print statement: Poorly formed print statement.");
+        else tokens.pop();
 
         std::queue<Token*> tokensSansParens;
         while (tokens.size() > 1) {

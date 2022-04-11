@@ -100,55 +100,55 @@ std::string getTokenValueIdentifier(const tokens::TokenValue& v) {
         case tokens::badSymbol:
             return "badSymbol";
         case tokens::identifier:
-            return "identifier";
+            return "id";
         case tokens::integerLiteral:
-            return "integerLiteral";
+            return "intLit";
         case tokens::operatorAssignment:
-            return "operatorAssignment";
+            return "opAssignment";
         case tokens::operatorLessEq:
-            return "operatorLessEq";
+            return "opLessEq";
         case tokens::operatorLess:
-            return "operatorLess";
+            return "opLess";
         case tokens::operatorGreatEq:
-            return "operatorGreatEq";
+            return "opGreatEq";
         case tokens::operatorGreat:
-            return "operatorGreat";
+            return "opGreat";
         case tokens::operatorEqual:
-            return "operatorEqual";
+            return "opEqual";
         case tokens::operatorNotEqual:
-            return "operatorNotEqual";
+            return "opNotEqual";
         case tokens::operatorAdd:
-            return "operatorAdd";
+            return "opAdd";
         case tokens::operatorSub:
-            return "operatorSub";
+            return "opSub";
         case tokens::operatorMult:
-            return "operatorMult";
+            return "opMult";
         case tokens::operatorDiv:
-            return "operatorDiv";
+            return "opDiv";
         case tokens::operatorParenL:
-            return "operatorParenL";
+            return "opParenL";
         case tokens::operatorParenR:
-            return "operatorParenR";
+            return "opParenR";
         case tokens::keywordFunction:
-            return "keywordFunction";
+            return "kwFunction";
         case tokens::keywordEnd:
-            return "keywordEnd";
+            return "kwEnd";
         case tokens::keywordIf:
-            return "keywordIf";
+            return "kwIf";
         case tokens::keywordThen:
-            return "keywordThen";
+            return "kwThen";
         case tokens::keywordElse:
-            return "keywordElse";
+            return "kwElse";
         case tokens::keywordWhile:
-            return "keywordWhile";
+            return "kwWhile";
         case tokens::keywordDo:
-            return "keywordDo";
+            return "kwDo";
         case tokens::keywordRepeat:
-            return "keywordRepeat";
+            return "kwRepeat";
         case tokens::keywordUntil:
-            return "keywordUntil";
+            return "kwUntil";
         case tokens::keywordPrint:
-            return "keywordPrint";
+            return "kwPrint";
         default:
             return "TOKEN_VALUE_NOT_FOUND";
     }
@@ -165,7 +165,7 @@ struct Token {
     }
 
     void show() {
-        std::cout << "[ VALUE: " << std::setw(20) << std::left << getTokenValueIdentifier(value) + ", ";
+        std::cout << "[ VALUE: " << std::setw(11) << std::left << getTokenValueIdentifier(value) + ", ";
         std::cout << "LEXEME: " << std::setw(11) << std::left << "\"" + lexeme + "\"" << "]" << std::endl;
     }
 
