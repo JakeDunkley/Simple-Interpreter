@@ -150,7 +150,7 @@ std::string getTokenValueIdentifier(const tokens::TokenValue& v) {
         case tokens::keywordPrint:
             return "kwPrint";
         default:
-            return "TOKEN_VALUE_NOT_FOUND";
+            return "NOT_FOUND";
     }
 }
 
@@ -165,7 +165,7 @@ struct Token {
     }
 
     void show() {
-        std::cout << "[ VALUE: " << std::setw(11) << std::left << getTokenValueIdentifier(value) + ", ";
+        std::cout << "[ VALUE: " << std::setw(12) << std::left << getTokenValueIdentifier(value) + ", ";
         std::cout << "LEXEME: " << std::setw(11) << std::left << "\"" + lexeme + "\"" << "]" << std::endl;
     }
 

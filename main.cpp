@@ -174,7 +174,7 @@ int main() {
         testQueue.push(t);
     }
 
-    GrammarNode* test = createNodeStatementPrint(testQueue);
+    GrammarNode* test = createNodeFunctionHeader(testQueue);
     test -> show();
 
     return 0;
