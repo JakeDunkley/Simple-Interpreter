@@ -171,7 +171,7 @@ int main() {
 
     // All data and variables needed for building nodes groups from tokens.
     vector<queue<Token*>> tokenLines; // Queues of tokens arranged by line.
-    vector<GrammarNode*> nodes;        // Generated node groups are stored here.
+    vector<GrammarNode*> nodes;       // Generated node groups are stored here.
 
     cout << endl;
     cout << "Start of parsing..." << endl;
@@ -192,6 +192,7 @@ int main() {
 
     for (queue<Token*> line : tokenLines) {
         switch(line.front() -> value) {
+
             case tokens::identifier: {
                 nodes.push_back(createNodeStatementAssignment(line));
                 break;
@@ -207,20 +208,30 @@ int main() {
                 break;
             }
 
-            case tokens::keywordIf:
+            case tokens::keywordIf: {
+                nodes.push_back(createNodeStatementIf(line));
                 break;
-            case tokens::keywordThen:
+            }
+
+            case tokens::keywordElse: {
+                nodes.push_back(createNodeBranchElse());
                 break;
-            case tokens::keywordElse:
+            }
+
+            case tokens::keywordWhile: {
+                nodes.push_back(createNodeStatementWhile(line));
                 break;
-            case tokens::keywordWhile:
+            }
+
+            case tokens::keywordRepeat: {
+                nodes.push_back(createNodeStatementRepeat());
                 break;
-            case tokens::keywordDo:
+            }
+
+            case tokens::keywordUntil: {
+                nodes.push_back(createNodeStatementUntil(line));
                 break;
-            case tokens::keywordRepeat:
-                break;
-            case tokens::keywordUntil:
-                break;
+            }
             case tokens::keywordPrint: {
                 nodes.push_back(createNodeStatementPrint(line));
                 break;

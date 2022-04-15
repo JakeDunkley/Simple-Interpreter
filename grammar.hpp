@@ -29,7 +29,7 @@ namespace grammar {
         branchElse =                  7,
         statementWhile =              8,
         statementRepeat =             9,
-        branchUntil =                10,
+        statementUntil =             10,
         terminalIdentifier =         11,
         terminalIntegerLiteral =     12,
         terminalOperatorArithmetic = 13,
@@ -65,8 +65,8 @@ std::string getGrammarNodeIdentifier(const grammar::GrammarValue& value) {
             return "statWhile";
         case grammar::statementRepeat:
             return "statRepeat";
-        case grammar::branchUntil:
-            return "branchUntil";
+        case grammar::statementUntil:
+            return "statUntil";
         case grammar::terminalIdentifier:
             return "termIdent";
         case grammar::terminalIntegerLiteral:
@@ -463,6 +463,55 @@ GrammarNode* createNodeStatementIf(std::queue<Token*>& tokens) {
 GrammarNode* createNodeBranchElse() {
     // An else branch (at the start) has no children, so we just return the empty parent node.
     return new GrammarNode(grammar::branchElse);
+}
+
+// Function to create the start of a while statement node group.
+GrammarNode* createNodeStatementWhile(std::queue<Token*>& tokens) {
+    GrammarNode* nodeStatementWhile = new GrammarNode(grammar::statementWhile);
+
+    // The first tokens HAS to be the keyword if, so we just ignore it.
+    tokens.pop();
+
+    // Next, we check the end of the queue to see if the the "then" keyword is present before
+    // sending the rest of the queue to create the boolean expression.
+    if (tokens.back() -> value != tokens::keywordDo) {
+        throw std::runtime_error("[Error] While statement: Missing \"do\" keyword.");
+    }
+
+        // If we're good, send the rest of the queue to create the boolean expression and add it to the parent node.
+    else {
+        std::queue<Token*> tokensSansDo;
+
+        while (tokens.size() > 1) {
+            tokensSansDo.push(tokens.front());
+            tokens.pop();
+        }
+
+        nodeStatementWhile -> addChildDirect(createNodeExpressionBoolean(tokensSansDo));
+        tokens.pop();
+    }
+
+    return nodeStatementWhile;
+}
+
+// Function to create the start of a repeat/until statement node group.
+// This will be linked to child node groups in a different process.
+GrammarNode* createNodeStatementRepeat() {
+    // A repeat statement (at the start) has no children, so we just return the empty parent node.
+    return new GrammarNode(grammar::statementRepeat);
+}
+
+// Function to create the end of a repeat/until statement node group.
+GrammarNode* createNodeStatementUntil(std::queue<Token*>& tokens) {
+    GrammarNode* nodeStatementUntil = new GrammarNode(grammar::statementUntil);
+
+    // The first tokens HAS to be the keyword until, so we just ignore it.
+    tokens.pop();
+
+    // Send the rest of the queue to create the boolean expression.
+    nodeStatementUntil -> addChildDirect(createNodeExpressionBoolean(tokens));
+
+    return nodeStatementUntil;
 }
 
 // Function to create placeholder end nodes. These are used for compound statements.
