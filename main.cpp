@@ -6,6 +6,8 @@
  * Project:     Complete Interpreter
  */
 
+// 0x2d466f7220446164
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -170,82 +172,109 @@ int main() {
     /* ---------------- ---------------- Parser Section ---------------- ---------------- */
 
     // All data and variables needed for building nodes groups from tokens.
-    vector<queue<Token*>> tokenLines; // Queues of tokens arranged by line.
-    vector<GrammarNode*> nodes;       // Generated node groups are stored here.
+    queue<queue<Token*>> tokenLines; // Queues of tokens arranged by line.
+    queue<GrammarNode*> nodes;       // Generated node groups are stored here.
+    GrammarNode* parseTree = new GrammarNode(grammar::program);
 
     cout << endl;
     cout << "Start of parsing..." << endl;
 
     // Split up list of tokens by line and put them in separate queues for node building.
-    tokenLines.push_back(queue<Token*>{});
-    int curLine = 0;
+    tokenLines.push(queue<Token*>{});
     for (Token* t : tokens) {
         if (t -> value == tokens::endOfLine) {
-            curLine++;
-            tokenLines.push_back(queue<Token*>{});
+            tokenLines.push(queue<Token*>{});
         }
 
         else {
-            tokenLines[curLine].push(t);
+            tokenLines.back().push(t);
         }
     }
 
-    for (queue<Token*> line : tokenLines) {
-        switch(line.front() -> value) {
+    // This loop generates node groups for each line.
+    // These will be combined into whole statements next, and then
+    // those will be combined into the complete program parse tree.
+    while (!tokenLines.empty()) {
+        switch(tokenLines.front().front() -> value) {
 
             case tokens::identifier: {
-                nodes.push_back(createNodeStatementAssignment(line));
+                nodes.push(createNodeStatementAssignment(tokenLines.front()));
                 break;
             }
 
             case tokens::keywordFunction: {
-                nodes.push_back(createNodeFunctionHeader(line));
+                nodes.push(createNodeFunctionHeader(tokenLines.front()));
                 break;
             }
 
             case tokens::keywordEnd: {
-                nodes.push_back(createNodeEnd());
+                nodes.push(createNodeEnd());
                 break;
             }
 
             case tokens::keywordIf: {
-                nodes.push_back(createNodeStatementIf(line));
+                nodes.push(createNodeStatementIf(tokenLines.front()));
                 break;
             }
 
             case tokens::keywordElse: {
-                nodes.push_back(createNodeBranchElse());
+                nodes.push(createNodeBranchElse());
                 break;
             }
 
             case tokens::keywordWhile: {
-                nodes.push_back(createNodeStatementWhile(line));
+                nodes.push(createNodeStatementWhile(tokenLines.front()));
                 break;
             }
 
             case tokens::keywordRepeat: {
-                nodes.push_back(createNodeStatementRepeat());
+                nodes.push(createNodeStatementRepeat());
                 break;
             }
 
             case tokens::keywordUntil: {
-                nodes.push_back(createNodeStatementUntil(line));
+                nodes.push(createNodeStatementUntil(tokenLines.front()));
                 break;
             }
             case tokens::keywordPrint: {
-                nodes.push_back(createNodeStatementPrint(line));
+                nodes.push(createNodeStatementPrint(tokenLines.front()));
                 break;
             }
 
             default:
                 break;
         }
+
+        tokenLines.pop();
+        nodes.back() -> show();
     }
 
-    for (GrammarNode* g : nodes) {
-        g -> show();
-        cout << endl;
+    // Next, link build multi-line node groups from generated node groups.
+    while (!nodes.empty()) {
+        switch (nodes.front() -> value) {
+
+            case grammar::statementIf: {
+                parseTree -> addChildDirect(createSuperNodeStatementIfElse(nodes));
+                break;
+            }
+
+            case grammar::statementRepeat: {
+                break;
+            }
+
+            case grammar::statementWhile: {
+                break;
+            }
+
+            default:
+                parseTree -> addChildDirect(nodes.front());
+                break;
+        }
+
+        nodes.pop();
     }
+
+    parseTree -> show();
 
     return 0;
 }

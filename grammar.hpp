@@ -162,7 +162,10 @@ struct GrammarNode {
     }
 };
 
-// Functions to create a function header node group.
+
+/* ---------------- Functions to create all node groups by line ---------------- */
+
+// Function to create the function header statement node group.
 GrammarNode* createNodeFunctionHeader(std::queue<Token*>& tokens) {
     GrammarNode* nodeFunctionHeader = new GrammarNode(grammar::functionHeader);
 
@@ -517,4 +520,245 @@ GrammarNode* createNodeStatementUntil(std::queue<Token*>& tokens) {
 // Function to create placeholder end nodes. These are used for compound statements.
 GrammarNode* createNodeEnd() {
     return new GrammarNode(grammar::end);
+}
+
+/* ---------------- Functions to create super node groups ---------------- */
+
+// Function to create super node group for a complete if/else statement.
+GrammarNode* createSuperNodeStatementIfElse(std::queue<GrammarNode*>& nodes) {
+
+    // Every other node will be attached to the if node (the first node in the queue).
+    GrammarNode* superNodeIfElse = nodes.front();
+    nodes.pop();
+
+    // If the next statement is the else branch, there's no block statements, so we throw an error.
+    if (nodes.front() -> value == grammar::branchElse) {
+        throw std::runtime_error("[Error] If/Else statement: No statements inside 'if' condition.");
+    }
+
+    // Otherwise, add the block statements to the if statement.
+    while (nodes.front() -> value != grammar::branchElse) {
+
+        // Throw an error if no else statement is present.
+        if (nodes.empty()) {
+            throw std::runtime_error("[Error] If/Else statement: No 'else' statement.");
+        }
+
+        //TODO Add support for nested statements.
+        superNodeIfElse -> addChildDirect(nodes.front());
+        nodes.pop();
+    }
+
+    // Add the else branch statement to the node group.
+    // All other statement nodes will be added to this, so we need to remember its address.
+    superNodeIfElse -> addChildDirect(nodes.front());
+    GrammarNode* nodeElseBranch = nodes.front();
+    nodes.pop();
+
+    // Next, add the else branch statement and add its block nodes.
+
+    // If the next statement is the end statement, there's no block statements, so we throw an error.
+    if (nodes.front() -> value == grammar::end) {
+        throw std::runtime_error("[Error] If/Else statement: No statements inside 'else' condition.");
+    }
+
+    // Otherwise, add the block statements to the else branch.
+    while (nodes.front() -> value != grammar::end) {
+
+        // Throw an error if no end statement is present.
+        if (nodes.empty()) {
+            throw std::runtime_error("[Error] If/Else statement: No end to statement.");
+        }
+
+        nodeElseBranch -> addChildDirect(nodes.front());
+        nodes.pop();
+    }
+
+    return superNodeIfElse;
+}
+
+// Function to create super node group for a complete while/do statement.
+GrammarNode* createSuperNodeStatementWhile(std::queue<GrammarNode*>& nodes) {
+
+    // Every other node will be attached to the while node (the first node in the queue).
+    GrammarNode* superNodeWhile = nodes.front();
+    nodes.pop();
+
+    // If the next statement is the end statement, there's no block statements, so we throw an error.
+    if (nodes.front() -> value == grammar::end) {
+        std::cout << "[Error] If/Else statement: No statements inside 'if' condition." << std::endl;
+        exit(-1);
+    }
+
+    return superNodeWhile;
+}
+
+// Function to create super node group for a complete repeat/until statement.
+GrammarNode* createSuperNodeRepeatUntil(std::queue<GrammarNode*>& nodes) {
+    GrammarNode* superNodeRepeatUntil = nodes.front();
+
+    return superNodeRepeatUntil;
+}
+
+// A A A A A A A A H H H H H H H H
+GrammarNode* buildParseTree(std::queue<GrammarNode*>& nodes) {
+
+    GrammarNode* nodeProgram = new GrammarNode(grammar::program);
+
+    switch(nodes.front() -> value) {
+
+        case grammar::statementIf: {
+
+            // Every other node in this statement will be attached to the if node (the first node in the queue).
+            GrammarNode* superNodeIfElse = nodes.front();
+            nodes.pop();
+
+            // If the next statement is the else branch, there's no block statements, so we throw an error.
+            if (nodes.front() -> value == grammar::branchElse) {
+                throw std::runtime_error("[Error] If/Else statement: No statements inside 'if' condition.");
+            }
+
+            // Otherwise, add the block statements to the if statement.
+            while (nodes.front() -> value != grammar::branchElse) {
+
+                // Throw an error if no else statement is present.
+                if (nodes.empty()) {
+                    throw std::runtime_error("[Error] If/Else statement: No 'else' statement.");
+                }
+
+                // If there's nested statements, make a recursive call to build its super node and
+                // add it to the current super node.
+                switch (nodes.front() -> value) {
+                    case grammar::statementIf:
+                    case grammar::statementWhile:
+                    case grammar::statementRepeat: {
+                        nodeProgram -> addChildDirect(buildParseTree(nodes));
+                        break;
+                    }
+
+                    default: {
+                        nodeProgram -> addChildDirect(nodes.front());
+                        nodes.pop();
+                        break;
+                    }
+                }
+            }
+
+            // Add the else branch statement to the node group.
+            // All other nested statement nodes will be added to this, so we need to remember its address.
+            superNodeIfElse -> addChildDirect(nodes.front());
+            GrammarNode* nodeElseBranch = nodes.front();
+            nodes.pop();
+
+            // Next, add the else branch statement and add its block nodes.
+
+            // If the next statement is the end statement, there's no block statements, so we throw an error.
+            if (nodes.front() -> value == grammar::end) {
+                throw std::runtime_error("[Error] If/Else statement: No statements inside 'else' condition.");
+            }
+
+            // Otherwise, add the block statements to the else branch.
+            while (nodes.front() -> value != grammar::end) {
+
+                // Throw an error if no end statement is present.
+                if (nodes.empty()) {
+                    throw std::runtime_error("[Error] If/Else statement: No end to statement.");
+                }
+
+                nodeElseBranch -> addChildDirect(nodes.front());
+                nodes.pop();
+            }
+
+            nodeProgram -> addChildDirect(superNodeIfElse);
+            break;
+        }
+
+        case grammar::statementRepeat: {
+
+            // Every other node in this statement will be attached to the if node (the first node in the queue).
+            GrammarNode* superNodeRepeatUntil = nodes.front();
+            nodes.pop();
+
+            // If the next statement is the until branch, there's no block statements, so we throw an error.
+            if (nodes.front() -> value == grammar::statementUntil) {
+                throw std::runtime_error("[Error] Repeat/Until statement: No statements inside 'repeat' statement.");
+            }
+
+            // Otherwise, add the block statements to the repeat statement.
+            while (nodes.front() -> value != grammar::statementUntil) {
+
+                // Throw an error if no until statement is reached.
+                if (nodes.empty()) {
+                    throw std::runtime_error("[Error] Repeat/Until statement: No 'until' statement.");
+                }
+
+                // If there's nested statements, make a recursive call to build its super node and
+                // add it to the current super node.
+                switch (nodes.front() -> value) {
+                    case grammar::statementIf:
+                    case grammar::statementWhile:
+                    case grammar::statementRepeat: {
+                        nodeProgram -> addChildDirect(buildParseTree(nodes));
+                        break;
+                    }
+
+                    default: {
+                        nodeProgram -> addChildDirect(nodes.front());
+                        nodes.pop();
+                        break;
+                    }
+                }
+            }
+
+            nodeProgram -> addChildDirect(superNodeRepeatUntil);
+            break;
+        }
+
+        case grammar::statementWhile: {
+
+            // Every other node in this statement will be attached to the if node (the first node in the queue).
+            GrammarNode* superNodeWhileDo = nodes.front();
+            nodes.pop();
+
+            // If the next statement is the until branch, there's no block statements, so we throw an error.
+            if (nodes.front() -> value == grammar::end) {
+                throw std::runtime_error("[Error] While/Do statement: No statements inside 'while' statement.");
+            }
+
+            // Otherwise, add the block statements to the repeat statement.
+            while (nodes.front() -> value != grammar::end) {
+
+                // Throw an error if no until statement is reached.
+                if (nodes.empty()) {
+                    throw std::runtime_error("[Error] While/Do statement: No 'end' statement.");
+                }
+
+                // If there's nested statements, make a recursive call to build its super node and
+                // add it to the current super node.
+                switch (nodes.front() -> value) {
+                    case grammar::statementIf:
+                    case grammar::statementWhile:
+                    case grammar::statementRepeat: {
+                        nodeProgram -> addChildDirect(buildParseTree(nodes));
+                        break;
+                    }
+
+                    default: {
+                        nodeProgram -> addChildDirect(nodes.front());
+                        nodes.pop();
+                        break;
+                    }
+                }
+            }
+
+            nodeProgram -> addChildDirect(superNodeWhileDo);
+            break;
+        }
+
+        default: {
+            nodeProgram -> addChildDirect(nodes.front());
+            nodes.pop();
+            break;
+        }
+    }
 }
