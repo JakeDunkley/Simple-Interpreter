@@ -140,6 +140,14 @@ struct GrammarNode {
                 if (i < children.size() - 1) std::cout << std::endl;
             }
         }
+
+        if (depth == 0) {
+            if (!children.empty()) std::cout << std::endl;
+            for (int i = 0; i < spacing * spacing; i++) {
+                std::cout << "-";
+            }
+            std::cout << std::endl;
+        }
     }
 
     // Delete node.
@@ -154,7 +162,7 @@ struct GrammarNode {
     }
 };
 
-// Functions to create nodes based on grammar definitions.
+// Functions to create a function header node group.
 GrammarNode* createNodeFunctionHeader(std::queue<Token*>& tokens) {
     GrammarNode* nodeFunctionHeader = new GrammarNode(grammar::functionHeader);
 
@@ -196,7 +204,7 @@ GrammarNode* createNodeFunctionHeader(std::queue<Token*>& tokens) {
     return nodeFunctionHeader;
 }
 
-// Recursive function used to construct arithmetic expression node trees.
+// Recursive function used to construct arithmetic expression node group.
 GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
 
     GrammarNode* nodeExprAr = new GrammarNode(grammar::expressionArithmetic);
@@ -285,7 +293,7 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
     else return nodeExprAr;
 }
 
-// Function to construct boolean expression node tree.
+// Function to construct boolean expression node group.
 // NOTE: This only accepts 3 arguments in this order: [opRel, id/literal, id/literal]
 GrammarNode* createNodeExpressionBoolean(std::queue<Token*>& tokens) {
     GrammarNode* nodeExpressionBoolean = new GrammarNode(grammar::expressionBoolean);
@@ -328,6 +336,51 @@ GrammarNode* createNodeExpressionBoolean(std::queue<Token*>& tokens) {
     return nodeExpressionBoolean;
 }
 
+// Function to create an assignment statement node group.
+GrammarNode* createNodeStatementAssignment(std::queue<Token*>& tokens) {
+    GrammarNode* nodeStatementAssignment = new GrammarNode(grammar::assignment);
+
+    // This is another node where we are simply matching a pattern.
+    // This time, it's [id, opAssign, <exprAr>].
+    // We know the first token is the identifier (that's how we got here).
+    nodeStatementAssignment -> addChildTerminal(grammar::terminalIdentifier, tokens.front());
+    tokens.pop();
+
+    // The second token has to be the 'assignment' operator, but we don't need to add a node for it.
+    if (tokens.front() -> value != tokens::operatorAssignment) {
+        throw std::runtime_error("[Error] Assignment statement: No assignment operator.");
+    }
+
+    else tokens.pop();
+
+    // For the rest of the node(s) we either create an exprAr node group or just the single node.
+    if (tokens.empty()) {
+        throw std::runtime_error("[Error] Assignment statement: No value to assign.");
+    }
+
+    // If the size is 1, we just add the single node.
+    else if (tokens.size() == 1) {
+        if (tokens.front() -> value == tokens::identifier) {
+            nodeStatementAssignment -> addChildTerminal(grammar::terminalIdentifier, tokens.front());
+        }
+
+        else if (tokens.front() -> value == tokens::integerLiteral) {
+            nodeStatementAssignment -> addChildTerminal(grammar::terminalIntegerLiteral, tokens.front());
+        }
+
+        else {
+            throw std::runtime_error("[Error] Assignment statement: Invalid single argument.");
+        }
+    }
+
+    // Otherwise, create an exprAr.
+    else {
+        nodeStatementAssignment -> addChildDirect(createNodeExpressionArithmetic(tokens));
+    }
+
+    return nodeStatementAssignment;
+}
+
 // Function to create a print statement node group.
 GrammarNode* createNodeStatementPrint(std::queue<Token*>& tokens) {
 
@@ -352,7 +405,67 @@ GrammarNode* createNodeStatementPrint(std::queue<Token*>& tokens) {
     }
 
     GrammarNode* nodePrintStatement = new GrammarNode(grammar::statementPrint);
-    nodePrintStatement -> addChildDirect(createNodeExpressionArithmetic(tokens));
+
+    // Special case of having only one token inside the print statement.
+    if (tokens.size() == 1) {
+        if (tokens.front() -> value == tokens::identifier) {
+            nodePrintStatement -> addChildTerminal(grammar::terminalIdentifier, tokens.front());
+        }
+
+        else if (tokens.front() -> value == tokens::integerLiteral) {
+            nodePrintStatement -> addChildTerminal(grammar::terminalIntegerLiteral, tokens.front());
+        }
+
+        else {
+            throw std::runtime_error("[Error] Print statement: Invalid single argument.");
+        }
+    }
+
+    // Otherwise, create a exprAr and add it to the print statement node.
+    else {
+        nodePrintStatement -> addChildDirect(createNodeExpressionArithmetic(tokens));
+    }
 
     return nodePrintStatement;
+}
+
+// Function to create the start of an if statement node group.
+// This will be linked to child node groups in a different process.
+GrammarNode* createNodeStatementIf(std::queue<Token*>& tokens) {
+    GrammarNode* nodeStatementIf = new GrammarNode(grammar::statementIf);
+
+    // The first tokens HAS to be the keyword if, so we just ignore it.
+    tokens.pop();
+
+    // Next, we check the end of the queue to see if the the "then" keyword is present before
+    // sending the rest of the queue to create the boolean expression.
+    if (tokens.back() -> value != tokens::keywordThen) {
+        throw std::runtime_error("[Error] If statement: Missing then keyword.");
+    }
+
+    // If we're good, send the rest of the queue to create the boolean expression and add it to the parent node.
+    else {
+        std::queue<Token*> tokensSansThen;
+
+        while (tokens.size() > 1) {
+            tokensSansThen.push(tokens.front());
+            tokens.pop();
+        }
+
+        nodeStatementIf -> addChildDirect(createNodeExpressionBoolean(tokensSansThen));
+        tokens.pop();
+    }
+
+    return nodeStatementIf;
+}
+
+// Function to create the else portion of a complete if statement.
+GrammarNode* createNodeBranchElse() {
+    // An else branch (at the start) has no children, so we just return the empty parent node.
+    return new GrammarNode(grammar::branchElse);
+}
+
+// Function to create placeholder end nodes. These are used for compound statements.
+GrammarNode* createNodeEnd() {
+    return new GrammarNode(grammar::end);
 }

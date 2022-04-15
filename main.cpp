@@ -59,6 +59,7 @@ int main() {
     string registerLetters;         // Holds char(s) of keyword or identifier being built.
     string registerOperator;        // Holds chars of operator being built.
     string registerLiteralInteger;  // Holds chars of integer being built.
+
     // Variables needed for throwing error(s).
     string registerLine;            // Holds chars in current line.
     int lineIndex;                  // Keeps track of current index on current line.
@@ -168,14 +169,72 @@ int main() {
 
     /* ---------------- ---------------- Parser Section ---------------- ---------------- */
 
-    queue<Token*> testQueue;
+    // All data and variables needed for building nodes groups from tokens.
+    vector<queue<Token*>> tokenLines; // Queues of tokens arranged by line.
+    vector<GrammarNode*> nodes;        // Generated node groups are stored here.
 
+    cout << endl;
+    cout << "Start of parsing..." << endl;
+
+    // Split up list of tokens by line and put them in separate queues for node building.
+    tokenLines.push_back(queue<Token*>{});
+    int curLine = 0;
     for (Token* t : tokens) {
-        testQueue.push(t);
+        if (t -> value == tokens::endOfLine) {
+            curLine++;
+            tokenLines.push_back(queue<Token*>{});
+        }
+
+        else {
+            tokenLines[curLine].push(t);
+        }
     }
 
-    GrammarNode* test = createNodeFunctionHeader(testQueue);
-    test -> show();
+    for (queue<Token*> line : tokenLines) {
+        switch(line.front() -> value) {
+            case tokens::identifier: {
+                nodes.push_back(createNodeStatementAssignment(line));
+                break;
+            }
+
+            case tokens::keywordFunction: {
+                nodes.push_back(createNodeFunctionHeader(line));
+                break;
+            }
+
+            case tokens::keywordEnd: {
+                nodes.push_back(createNodeEnd());
+                break;
+            }
+
+            case tokens::keywordIf:
+                break;
+            case tokens::keywordThen:
+                break;
+            case tokens::keywordElse:
+                break;
+            case tokens::keywordWhile:
+                break;
+            case tokens::keywordDo:
+                break;
+            case tokens::keywordRepeat:
+                break;
+            case tokens::keywordUntil:
+                break;
+            case tokens::keywordPrint: {
+                nodes.push_back(createNodeStatementPrint(line));
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+
+    for (GrammarNode* g : nodes) {
+        g -> show();
+        cout << endl;
+    }
 
     return 0;
 }

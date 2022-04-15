@@ -104,7 +104,7 @@ std::string getTokenValueIdentifier(const tokens::TokenValue& v) {
         case tokens::integerLiteral:
             return "intLit";
         case tokens::operatorAssignment:
-            return "opAssignment";
+            return "opAssign";
         case tokens::operatorLessEq:
             return "opLessEq";
         case tokens::operatorLess:
@@ -116,7 +116,7 @@ std::string getTokenValueIdentifier(const tokens::TokenValue& v) {
         case tokens::operatorEqual:
             return "opEqual";
         case tokens::operatorNotEqual:
-            return "opNotEqual";
+            return "opNotEq";
         case tokens::operatorAdd:
             return "opAdd";
         case tokens::operatorSub:
@@ -130,7 +130,7 @@ std::string getTokenValueIdentifier(const tokens::TokenValue& v) {
         case tokens::operatorParenR:
             return "opParenR";
         case tokens::keywordFunction:
-            return "kwFunction";
+            return "kwFunc";
         case tokens::keywordEnd:
             return "kwEnd";
         case tokens::keywordIf:
@@ -165,7 +165,7 @@ struct Token {
     }
 
     void show() {
-        std::cout << "[ VALUE: " << std::setw(12) << std::left << getTokenValueIdentifier(value) + ", ";
+        std::cout << "[ VALUE: " << std::setw(11) << std::left << getTokenValueIdentifier(value) + ", ";
         std::cout << "LEXEME: " << std::setw(11) << std::left << "\"" + lexeme + "\"" << "]" << std::endl;
     }
 
