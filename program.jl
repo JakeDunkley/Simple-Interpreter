@@ -2,13 +2,14 @@
 
 function a()
     b = 13
-    while < b 21 do
-        b = + b 1
 
-        if == b 17 then
+    if < b 21 then
+        while < b 21 do
             print(b)
-        else
-            print(- b 1)
+            b = + b 1
         end
+    else
+        c = / b 2
+        print(c)
     end
 end

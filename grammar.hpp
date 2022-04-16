@@ -124,30 +124,24 @@ struct GrammarNode {
 
     // Prints the structure of the node tree and its members.
     void show(int depth = 0) {
-        static const int spacing = 6;
+        static const int spacing = 8;
 
         for (int i = 0; i < depth; i++) {
-            std::cout << std::setw(spacing) << std::right << "|";
+            std::cout << std::setw(spacing) << std::left << "|";
         }
 
-        std::cout << "_";
+        std::cout << "|-";
         if (isTerminal) std::cout << linkedToken -> toString();
-        else std::cout << getGrammarNodeIdentifier(value) << std::endl;
+        else std::cout << getGrammarNodeIdentifier(value);
+        std::cout << std::endl;
 
         if (!children.empty()) {
-            for (int i = 0; i < children.size(); i++) {
-                children[i] -> show(depth + 1);
-                if (i < children.size() - 1) std::cout << std::endl;
+            for (auto& c : children) {
+                c -> show(depth + 1);
             }
         }
 
-        if (depth == 0) {
-            if (!children.empty()) std::cout << std::endl;
-            for (int i = 0; i < spacing * spacing; i++) {
-                std::cout << "-";
-            }
-            std::cout << std::endl;
-        }
+        if (depth == 0){int s=64;while(s-->0)std::cout<<"-";std::cout<<std::endl;}
     }
 
     // Delete node.
@@ -605,7 +599,7 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
             // Add 'end' node to finish this super node group.
             superNodeIfElse -> addChildDirect(nodes.front());
-
+            nodes.pop();
             return superNodeIfElse;
         }
 
@@ -648,7 +642,7 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
             // Add 'until' node to finish this super node group.
             superNodeRepeatUntil -> addChildDirect(nodes.front());
-
+            nodes.pop();
             return superNodeRepeatUntil;
         }
 
@@ -691,12 +685,14 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
             // Add 'end' node to finish this super node group.
             superNodeWhileDo -> addChildDirect(nodes.front());
-
+            nodes.pop();
             return superNodeWhileDo;
         }
 
         default: {
-            return nodes.front();
+            GrammarNode* toReturn = nodes.front();
+            nodes.pop();
+            return toReturn;
         }
     }
 }

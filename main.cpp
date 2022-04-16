@@ -167,7 +167,7 @@ int main() {
         }
     }
 
-    cout << "Lexical analysis done!\n" << endl;
+    cout << "Lexical analysis done!" << endl;
 
     /* ---------------- ---------------- Parser Section ---------------- ---------------- */
 
@@ -249,6 +249,8 @@ int main() {
 
         tokenLines.pop();
         cout << "Parsed line " << nodes.size() << ": " << endl;
+
+        // Show node groups as they are completed.
         nodes.back() -> show();
     }
 
@@ -258,10 +260,12 @@ int main() {
     // Next, build the full parse tree from the generated node groups.
     while (!nodes.empty()) {
         parseTree -> addChildDirect(createSuperNode(nodes));
-        nodes.pop();
     }
 
+    // Show completed parse tree.
     parseTree -> show();
+
+    cout << "Parsing done!" << endl;
 
     return 0;
 }
