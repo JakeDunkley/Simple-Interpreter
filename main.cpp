@@ -191,6 +191,8 @@ int main() {
         }
     }
 
+    cout << "Creating node groups for each line..." << endl;
+
     // This loop generates node groups for each line.
     // These will be combined into whole statements next, and then
     // those will be combined into the complete program parse tree.
@@ -246,31 +248,16 @@ int main() {
         }
 
         tokenLines.pop();
+        cout << "Parsed line " << nodes.size() << ": " << endl;
         nodes.back() -> show();
     }
 
-    // Next, link build multi-line node groups from generated node groups.
+    cout << "Done parsing lines!" << endl;
+    cout << "Starting combination process..." << endl;
+
+    // Next, build the full parse tree from the generated node groups.
     while (!nodes.empty()) {
-        switch (nodes.front() -> value) {
-
-            case grammar::statementIf: {
-                parseTree -> addChildDirect(createSuperNodeStatementIfElse(nodes));
-                break;
-            }
-
-            case grammar::statementRepeat: {
-                break;
-            }
-
-            case grammar::statementWhile: {
-                break;
-            }
-
-            default:
-                parseTree -> addChildDirect(nodes.front());
-                break;
-        }
-
+        parseTree -> addChildDirect(createSuperNode(nodes));
         nodes.pop();
     }
 

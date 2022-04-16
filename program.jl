@@ -1,8 +1,14 @@
 // This is a test arithmetic expression
 
-if > b 5 then
-    print(b)
-    b = + b 1
-else
-    print(* 2 b)
+function a()
+    b = 13
+    while < b 21 do
+        b = + b 1
+
+        if == b 17 then
+            print(b)
+        else
+            print(- b 1)
+        end
+    end
 end

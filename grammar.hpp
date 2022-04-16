@@ -522,88 +522,8 @@ GrammarNode* createNodeEnd() {
     return new GrammarNode(grammar::end);
 }
 
-/* ---------------- Functions to create super node groups ---------------- */
-
-// Function to create super node group for a complete if/else statement.
-GrammarNode* createSuperNodeStatementIfElse(std::queue<GrammarNode*>& nodes) {
-
-    // Every other node will be attached to the if node (the first node in the queue).
-    GrammarNode* superNodeIfElse = nodes.front();
-    nodes.pop();
-
-    // If the next statement is the else branch, there's no block statements, so we throw an error.
-    if (nodes.front() -> value == grammar::branchElse) {
-        throw std::runtime_error("[Error] If/Else statement: No statements inside 'if' condition.");
-    }
-
-    // Otherwise, add the block statements to the if statement.
-    while (nodes.front() -> value != grammar::branchElse) {
-
-        // Throw an error if no else statement is present.
-        if (nodes.empty()) {
-            throw std::runtime_error("[Error] If/Else statement: No 'else' statement.");
-        }
-
-        //TODO Add support for nested statements.
-        superNodeIfElse -> addChildDirect(nodes.front());
-        nodes.pop();
-    }
-
-    // Add the else branch statement to the node group.
-    // All other statement nodes will be added to this, so we need to remember its address.
-    superNodeIfElse -> addChildDirect(nodes.front());
-    GrammarNode* nodeElseBranch = nodes.front();
-    nodes.pop();
-
-    // Next, add the else branch statement and add its block nodes.
-
-    // If the next statement is the end statement, there's no block statements, so we throw an error.
-    if (nodes.front() -> value == grammar::end) {
-        throw std::runtime_error("[Error] If/Else statement: No statements inside 'else' condition.");
-    }
-
-    // Otherwise, add the block statements to the else branch.
-    while (nodes.front() -> value != grammar::end) {
-
-        // Throw an error if no end statement is present.
-        if (nodes.empty()) {
-            throw std::runtime_error("[Error] If/Else statement: No end to statement.");
-        }
-
-        nodeElseBranch -> addChildDirect(nodes.front());
-        nodes.pop();
-    }
-
-    return superNodeIfElse;
-}
-
-// Function to create super node group for a complete while/do statement.
-GrammarNode* createSuperNodeStatementWhile(std::queue<GrammarNode*>& nodes) {
-
-    // Every other node will be attached to the while node (the first node in the queue).
-    GrammarNode* superNodeWhile = nodes.front();
-    nodes.pop();
-
-    // If the next statement is the end statement, there's no block statements, so we throw an error.
-    if (nodes.front() -> value == grammar::end) {
-        std::cout << "[Error] If/Else statement: No statements inside 'if' condition." << std::endl;
-        exit(-1);
-    }
-
-    return superNodeWhile;
-}
-
-// Function to create super node group for a complete repeat/until statement.
-GrammarNode* createSuperNodeRepeatUntil(std::queue<GrammarNode*>& nodes) {
-    GrammarNode* superNodeRepeatUntil = nodes.front();
-
-    return superNodeRepeatUntil;
-}
-
 // A A A A A A A A H H H H H H H H
-GrammarNode* buildParseTree(std::queue<GrammarNode*>& nodes) {
-
-    GrammarNode* nodeProgram = new GrammarNode(grammar::program);
+GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
     switch(nodes.front() -> value) {
 
@@ -632,12 +552,12 @@ GrammarNode* buildParseTree(std::queue<GrammarNode*>& nodes) {
                     case grammar::statementIf:
                     case grammar::statementWhile:
                     case grammar::statementRepeat: {
-                        nodeProgram -> addChildDirect(buildParseTree(nodes));
+                        superNodeIfElse -> addChildDirect(createSuperNode(nodes));
                         break;
                     }
 
                     default: {
-                        nodeProgram -> addChildDirect(nodes.front());
+                        superNodeIfElse -> addChildDirect(nodes.front());
                         nodes.pop();
                         break;
                     }
@@ -665,12 +585,28 @@ GrammarNode* buildParseTree(std::queue<GrammarNode*>& nodes) {
                     throw std::runtime_error("[Error] If/Else statement: No end to statement.");
                 }
 
-                nodeElseBranch -> addChildDirect(nodes.front());
-                nodes.pop();
+                // If there's nested statements, make a recursive call to build its super node and
+                // add it to the current super node.
+                switch (nodes.front() -> value) {
+                    case grammar::statementIf:
+                    case grammar::statementWhile:
+                    case grammar::statementRepeat: {
+                        nodeElseBranch -> addChildDirect(createSuperNode(nodes));
+                        break;
+                    }
+
+                    default: {
+                        nodeElseBranch -> addChildDirect(nodes.front());
+                        nodes.pop();
+                        break;
+                    }
+                }
             }
 
-            nodeProgram -> addChildDirect(superNodeIfElse);
-            break;
+            // Add 'end' node to finish this super node group.
+            superNodeIfElse -> addChildDirect(nodes.front());
+
+            return superNodeIfElse;
         }
 
         case grammar::statementRepeat: {
@@ -698,20 +634,22 @@ GrammarNode* buildParseTree(std::queue<GrammarNode*>& nodes) {
                     case grammar::statementIf:
                     case grammar::statementWhile:
                     case grammar::statementRepeat: {
-                        nodeProgram -> addChildDirect(buildParseTree(nodes));
+                        superNodeRepeatUntil -> addChildDirect(createSuperNode(nodes));
                         break;
                     }
 
                     default: {
-                        nodeProgram -> addChildDirect(nodes.front());
+                        superNodeRepeatUntil -> addChildDirect(nodes.front());
                         nodes.pop();
                         break;
                     }
                 }
             }
 
-            nodeProgram -> addChildDirect(superNodeRepeatUntil);
-            break;
+            // Add 'until' node to finish this super node group.
+            superNodeRepeatUntil -> addChildDirect(nodes.front());
+
+            return superNodeRepeatUntil;
         }
 
         case grammar::statementWhile: {
@@ -739,26 +677,26 @@ GrammarNode* buildParseTree(std::queue<GrammarNode*>& nodes) {
                     case grammar::statementIf:
                     case grammar::statementWhile:
                     case grammar::statementRepeat: {
-                        nodeProgram -> addChildDirect(buildParseTree(nodes));
+                        superNodeWhileDo -> addChildDirect(createSuperNode(nodes));
                         break;
                     }
 
                     default: {
-                        nodeProgram -> addChildDirect(nodes.front());
+                        superNodeWhileDo -> addChildDirect(nodes.front());
                         nodes.pop();
                         break;
                     }
                 }
             }
 
-            nodeProgram -> addChildDirect(superNodeWhileDo);
-            break;
+            // Add 'end' node to finish this super node group.
+            superNodeWhileDo -> addChildDirect(nodes.front());
+
+            return superNodeWhileDo;
         }
 
         default: {
-            nodeProgram -> addChildDirect(nodes.front());
-            nodes.pop();
-            break;
+            return nodes.front();
         }
     }
 }
