@@ -14,6 +14,18 @@
 namespace interpret {
     std::string functionSymbol;
     std::map<std::string, int> symbolTable;
+
+    // Prints out the symbol table. Used for debugging segfaults -_-
+    void showSymbolTable() {
+        std::cout << "ID | Value" << std::endl;
+        std::cout << "----------" << std::endl;
+        std::cout << std::setw(2) << std::left << functionSymbol << " | fxnID" << std::endl;
+        for (std::pair<std::string, int> i : symbolTable) {
+            std::cout << std::setw(2) << std::left << i.first << " | ";
+            std::cout << std::setw(5) << std::right << i.second << std::endl;
+        }
+        std::cout << std::endl;
+    }
 }
 
 // Sees if a symbol has a logged value.
@@ -40,26 +52,30 @@ int* lookupSymbol(const std::string& symbol) {
 // Evaluates an arithmetic expression node and returns the result as an integer.
 int evalExpressionArithmetic(GrammarNode* node) {
 
-    // Find the value of both child arguments.
+    // Find the value of all child arguments.
     std::vector<int> vals;
 
-    for (int childIndex = 0; childIndex < node -> children.size(); childIndex++) {
-        switch (node -> children[1] -> value) {
+    for (int childIndex = 1; childIndex < node -> children.size(); childIndex++) {
+        switch (node -> children[childIndex] -> value) {
+
             case grammar::terminalIntegerLiteral: {
                 vals.push_back(std::stoi(node -> children[childIndex] -> linkedToken -> lexeme));
+                break;
             }
 
             case grammar::terminalIdentifier: {
                 int* val = lookupSymbol(node -> children[childIndex] -> linkedToken -> lexeme);
 
                 if (val == nullptr) {
-                    std::cout << "[Error] Arithmetic expression: Using variable that's not defined." << std::endl;
+                    std::cout << "[Error] Arithmetic expression: Using variable that is not defined." << std::endl;
                     exit(-1);
                 }
 
                 else {
                     vals.push_back(*val);
                 }
+
+                break;
             }
 
             case grammar::expressionArithmetic: {
@@ -113,6 +129,69 @@ int evalExpressionArithmetic(GrammarNode* node) {
             break;
         }
     }
+
+    return 0; // This is here to appease the compiler, this line should never be reached in theory.
+}
+
+// Evaluated a boolean expression node and returns the result.
+bool evalExpressionBoolean(GrammarNode* node) {
+
+    // Get value of things we're comparing.
+    int vals[2];
+
+    for (int i = 0; i < 2; i++) {
+
+        // Case of literal value.
+        if (node -> children[i + 1] -> value == grammar::terminalIntegerLiteral) {
+            vals[i] = std::stoi(node -> children[i + 1] -> linkedToken -> lexeme);
+        }
+
+        // If it's not a literal value, find the variable's value.
+        else {
+            int* litVal = lookupSymbol(node -> children[i + 1] -> linkedToken -> lexeme);
+
+            if (litVal == nullptr) {
+                std::cout << "[Error] Boolean expression: Compared value has not been initialized.";
+                exit(-1);
+            }
+
+            else {
+                vals[i] = *litVal;
+            }
+        }
+    }
+
+    // Do actual comparison here.
+    switch (node -> children[0] -> linkedToken -> value) {
+
+        case tokens::operatorLessEq: {
+            return vals[0] <= vals[1];
+        }
+
+        case tokens::operatorLess: {
+            return vals[0] < vals[1];
+        }
+
+        case tokens::operatorGreatEq: {
+            return vals[0] >= vals[1];
+        }
+
+        case tokens::operatorGreat: {
+            return vals[0] > vals[1];
+        }
+
+        case tokens::operatorEqual: {
+            return vals[0] == vals[1];
+        }
+
+        case tokens::operatorNotEqual: {
+            return vals[0] != vals[1];
+        }
+
+        default: {
+            return false; // This is here to appease the compiler.
+        }
+    }
 }
 
 // Assigns a value to a variable ID.
@@ -122,6 +201,7 @@ void evalAssignment(GrammarNode* node) {
     int value;
 
     switch (node -> children[1] -> value) {
+
         case grammar::terminalIntegerLiteral: {
             value = std::stoi(node -> children[1] -> linkedToken -> lexeme);
             break;
@@ -163,5 +243,100 @@ void evalAssignment(GrammarNode* node) {
     // Otherwise, change the current entry value.
     else {
         interpret::symbolTable.at(symbolID) = value;
+    }
+}
+
+// Evaluated a print statement and prints out the internal statement.
+void evalStatementPrint(GrammarNode* node) {
+    std::string toPrint;
+
+    switch (node -> children[0] -> value) {
+
+        case grammar::terminalIntegerLiteral: {
+            toPrint = node -> children[0] -> linkedToken -> lexeme;
+            break;
+        }
+
+        case grammar::terminalIdentifier: {
+            toPrint = std::to_string(*lookupSymbol(node -> children[0] -> linkedToken -> lexeme));
+            break;
+        }
+
+        case grammar::expressionArithmetic: {
+            toPrint = std::to_string(evalExpressionArithmetic(node -> children[0]));
+            break;
+        }
+
+        default: {
+            break;
+        }
+    }
+
+    std::cout << toPrint << std::endl;
+}
+
+// Recursive function that evaluates nodes and their children.
+void evalNode(GrammarNode* root) {
+    interpret::showSymbolTable();
+
+    switch (root -> value) {
+
+        case grammar::assignment: {
+            evalAssignment(root);
+            break;
+        }
+
+        case grammar::statementPrint: {
+            evalStatementPrint(root);
+            break;
+        }
+
+        case grammar::statementIf: {
+            bool cond = evalExpressionBoolean(root -> children[0]);
+
+            if (cond) {
+                for (int i = 1; i < root -> children.size() - 2; i++) {
+                    evalNode(root->children[i]);
+                }
+            }
+
+            else {
+                evalNode(root->children[root->children.size() - 2]);
+            }
+
+            break;
+        }
+
+        case grammar::statementWhile: {
+            bool cond = evalExpressionBoolean(root -> children[0]);
+
+            while (cond) {
+                for (int i = 1; i < root -> children.size() - 1; i++) {
+                    evalNode(root -> children[i]);
+                }
+
+                cond = evalExpressionBoolean(root -> children[0]);
+            }
+
+            break;
+        }
+
+        case grammar::statementRepeat: {
+            bool cond;
+
+            do {
+                for (int i = 0; i < root -> children.size() - 1; i++) {
+                    evalNode(root -> children[i]);
+                }
+
+                cond = !evalExpressionBoolean(root -> children[root -> children.size() - 1] -> children[0]);
+            } while (cond);
+
+            break;
+        }
+
+        default: {
+            break;
+        }
     }
 }

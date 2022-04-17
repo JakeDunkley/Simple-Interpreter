@@ -52,7 +52,7 @@ std::string getGrammarNodeIdentifier(const grammar::GrammarValue& value) {
         case grammar::assignment:
             return "assignment";
         case grammar::expressionArithmetic:
-            return "exprAr";
+            return "exprArith";
         case grammar::expressionBoolean:
             return "exprBool";
         case grammar::statementPrint:
@@ -122,28 +122,32 @@ struct GrammarNode {
         children.push_back(child);
     }
 
-    // Prints the structure of the node tree and its members.
-    void show(int depth = 0) {
+    // Prints the structure of the node tree and its members. (absolutely bodged)
+    void show(int depth = 0, std::vector<bool> last = {false}) {
         static const int spacing = 8;
 
         for (int i = 0; i < depth; i++) {
-            std::cout << std::setw(spacing) << std::left << "|";
+            std::cout << std::setw(spacing) << std::left << (last[i] ? "|" : "");
         }
 
-        std::cout << "|-";
+        std::cout << (depth > 0 ? "|-" : "-");
         if (isTerminal) std::cout << linkedToken -> toString();
         else std::cout << getGrammarNodeIdentifier(value);
         std::cout << std::endl;
 
         if (!children.empty()) {
-            for (auto& c : children) {
-                c -> show(depth + 1);
+            last.push_back(true);
+            for (int i = 0; i < children.size() - 1; i++) {
+                children[i] -> show(depth + 1, last);
             }
+
+            last.pop_back(); last.push_back(false);
+            children[children.size() - 1] -> show(depth + 1, last);
         }
 
         if (depth == 0) {
             int s = 64;
-            while (s-- > 0) std::cout<<"-";
+            while (s-- > 0) std::cout << "-";
             std::cout<<std::endl;
         }
     }
@@ -547,7 +551,7 @@ GrammarNode* createNodeEnd() {
 // Function to create combined node groups from line node groups.
 GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
-    switch(nodes.front() -> value) {
+    switch (nodes.front() -> value) {
 
         case grammar::statementIf: {
 

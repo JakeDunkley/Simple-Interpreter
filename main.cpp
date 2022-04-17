@@ -13,6 +13,7 @@
 #include <vector>
 #include "tokens.hpp"
 #include "grammar.hpp"
+#include "interpret.hpp"
 
 using namespace std;
 
@@ -272,7 +273,14 @@ int main() {
 
     /* ---------------- ---------------- Interpreter Section ---------------- ---------------- */
 
+    cout << endl;
+    cout << "Program Output:" << endl;
 
+    interpret::functionSymbol = parseTree -> children[0] -> children[0] -> linkedToken -> lexeme;
+
+    for (int i = 1; i < parseTree -> children.size() - 1; i++) {
+        evalNode(parseTree -> children[i]);
+    }
 
     return 0;
 }
