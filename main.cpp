@@ -152,7 +152,8 @@ int main() {
 
     // If there's a problem opening the file, display a message.
     else {
-        cout << "There was a problem opening the source file." << endl;
+        cout << "[Error] There was a problem opening the source file." << endl;
+        return -1;
     }
 
     // Show final tokens.
@@ -162,8 +163,8 @@ int main() {
         t -> show();
 
         if (t -> value == tokens::badSymbol) {
-            cout << "Error: Bad symbol!" << endl;
-            return 0;
+            cout << "[Error] Bad symbol." << endl;
+            return -1;
         }
     }
 

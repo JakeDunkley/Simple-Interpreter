@@ -141,7 +141,10 @@ struct GrammarNode {
             }
         }
 
-        if (depth == 0){int s=64;while(s-->0)std::cout<<"-";std::cout<<std::endl;}
+        if (depth == 0){
+            int s = 64;
+            while (s-- >0) std::cout<<"-";std::cout<<std::endl;
+        }
     }
 
     // Delete node.
@@ -165,7 +168,8 @@ GrammarNode* createNodeFunctionHeader(std::queue<Token*>& tokens) {
 
     // If tokens has more than 4 tokens, throw an error.
     if (tokens.size() > 4) {
-        throw std::runtime_error("[Error] Function header: Too many symbols.");
+        std::cout << "[Error] Function header: Too many symbols." << std::endl;
+        exit(-1);
     }
 
     // Otherwise, build the node group.
@@ -175,7 +179,8 @@ GrammarNode* createNodeFunctionHeader(std::queue<Token*>& tokens) {
 
         // The next token needs to be an identifier, and it's the only one we hold on to.
         if (tokens.front() -> value != tokens::identifier) {
-            throw std::runtime_error("[Error] Function header: No identifier.");
+            std::cout << "[Error] Function header: No identifier." << std::endl;
+            exit(-1);
         }
 
         else {
@@ -185,14 +190,16 @@ GrammarNode* createNodeFunctionHeader(std::queue<Token*>& tokens) {
 
         // The next token needs to be a left parenthesis.
         if (tokens.front() -> value != tokens::operatorParenL) {
-            throw std::runtime_error("[Error] Function header: No left parenthesis.");
+            std::cout << "[Error] Function header: No left parenthesis." << std::endl;
+            exit(-1);
         }
 
         tokens.pop();
 
         // The last token needs to be a right parenthesis.
         if (tokens.front() -> value != tokens::operatorParenR) {
-            throw std::runtime_error("[Error] Function header: No right parenthesis.");
+            std::cout << "[Error] Function header: No right parenthesis." << std::endl;
+            exit(-1);
         }
 
         tokens.pop();
@@ -214,7 +221,8 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
 
             // If the exprArith node already has an operator attached, then another operator is a problem.
             if (!nodeExprAr -> children.empty()) {
-                throw std::runtime_error("Error: Arithmetic expression: Too many operators.");
+                std::cout << "Error: Arithmetic expression: Too many operators." << std::endl;
+                exit(-1);
             }
 
             // Otherwise, add it to the node, and continue to the next token.
@@ -228,7 +236,8 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
 
             // If the current exprAr node does not have an operator child yet, this is a problem.
             if (nodeExprAr -> children.empty()) {
-                throw std::runtime_error("Error: Arithmetic expression: Adding identifier with no operator.");
+                std::cout << "Error: Arithmetic expression: Adding identifier with no operator." << std::endl;
+                exit(-1);
             }
 
             // Otherwise, add it do the node, and continue to the next token.
@@ -242,7 +251,8 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
 
             // If the current exprAr node does not have an operator child yet, this is a problem.
             if (nodeExprAr -> children.empty()) {
-                throw std::runtime_error("Error: Arithmetic expression: Adding literal with no operator.");
+                std::cout << "Error: Arithmetic expression: Adding literal with no operator." << std::endl;
+                exit(-1);
             }
 
             // Otherwise, add it do the node, and continue to the next token.
@@ -266,7 +276,8 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
 
             // If the expression does not have the min # of args, this is a problem.
             if (nodeExprAr -> children.size() < 3) {
-                throw std::runtime_error("Error: Arithmetic expression: Parenthesis mismatch.");
+                std::cout << "Error: Arithmetic expression: Parenthesis mismatch." << std::endl;
+                exit(-1);
             }
 
             else {
@@ -276,7 +287,8 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
 
         // If any other type of token is found, this is a problem.
         else {
-            throw std::runtime_error("Error: Arithmetic expression: Invalid token.");
+            std::cout << "Error: Arithmetic expression: Invalid token." << std::endl;
+            exit(-1);
         }
 
         tokens.pop();
@@ -284,7 +296,8 @@ GrammarNode* createNodeExpressionArithmetic(std::queue<Token*>& tokens) {
 
     // Once the queue has been emptied, check that the final node has the min # of args required.
     if (nodeExprAr -> children.size() < 3) {
-        throw std::runtime_error("Error: Arithmetic expression: Not enough arguments.");
+        std::cout << "Error: Arithmetic expression: Not enough arguments." << std::endl;
+        exit(-1);
     }
 
     else return nodeExprAr;
@@ -297,14 +310,16 @@ GrammarNode* createNodeExpressionBoolean(std::queue<Token*>& tokens) {
 
     // If tokens has more than 3 tokens, throw an error.
     if (tokens.size() > 3) {
-        throw std::runtime_error("[Error] Boolean expression: Too many arguments.");
+        std::cout << "[Error] Boolean expression: Too many arguments." << std::endl;
+        exit(-1);
     }
 
     // Otherwise, create the node group.
     else {
         // Try to add first token, which has to be a relative operator.
         if (!isOperatorRelative(tokens.front() -> value)) {
-            throw std::runtime_error("[Error] Boolean expression: No relative operator.");
+            std::cout << "[Error] Boolean expression: No relative operator." << std::endl;
+            exit(-1);
         }
 
         else {
@@ -323,7 +338,8 @@ GrammarNode* createNodeExpressionBoolean(std::queue<Token*>& tokens) {
             }
 
             else {
-                throw std::runtime_error("[Error] Boolean expression: Incorrect arguments.");
+                std::cout << "[Error] Boolean expression: Incorrect arguments." << std::endl;
+                exit(-1);
             }
 
             tokens.pop();
@@ -345,14 +361,16 @@ GrammarNode* createNodeStatementAssignment(std::queue<Token*>& tokens) {
 
     // The second token has to be the 'assignment' operator, but we don't need to add a node for it.
     if (tokens.front() -> value != tokens::operatorAssignment) {
-        throw std::runtime_error("[Error] Assignment statement: No assignment operator.");
+        std::cout << "[Error] Assignment statement: No assignment operator." << std::endl;
+        exit(-1);
     }
 
     else tokens.pop();
 
     // For the rest of the node(s) we either create an exprAr node group or just the single node.
     if (tokens.empty()) {
-        throw std::runtime_error("[Error] Assignment statement: No value to assign.");
+        std::cout << "[Error] Assignment statement: No value to assign." << std::endl;
+        exit(-1);
     }
 
     // If the size is 1, we just add the single node.
@@ -366,7 +384,8 @@ GrammarNode* createNodeStatementAssignment(std::queue<Token*>& tokens) {
         }
 
         else {
-            throw std::runtime_error("[Error] Assignment statement: Invalid single argument.");
+            std::cout << "[Error] Assignment statement: Invalid single argument." << std::endl;
+            exit(-1);
         }
     }
 
@@ -383,13 +402,18 @@ GrammarNode* createNodeStatementPrint(std::queue<Token*>& tokens) {
 
     // if the exprAr is not contained in parens or started with print, throw an error as the grammar does not permit this.
     if (tokens.front() -> value != tokens::keywordPrint || tokens.back() -> value != tokens::operatorParenR) {
-        throw std::runtime_error("Error: Print statement: Poorly formed print statement.");
+        std::cout << "Error: Print statement: Poorly formed print statement." << std::endl;
+        exit(-1);
     }
 
     // If we're good, remove the print token, the front and back parens & generate the exprAr.
     else {
         tokens.pop();
-        if (tokens.front() -> value != tokens::operatorParenL) throw std::runtime_error("Error: Print statement: Poorly formed print statement.");
+        if (tokens.front() -> value != tokens::operatorParenL) {
+            std::cout << "Error: Print statement: Poorly formed print statement." << std::endl;
+            exit(-1);
+        }
+
         else tokens.pop();
 
         std::queue<Token*> tokensSansParens;
@@ -414,7 +438,8 @@ GrammarNode* createNodeStatementPrint(std::queue<Token*>& tokens) {
         }
 
         else {
-            throw std::runtime_error("[Error] Print statement: Invalid single argument.");
+            std::cout << "[Error] Print statement: Invalid single argument." << std::endl;
+            exit(-1);
         }
     }
 
@@ -437,7 +462,8 @@ GrammarNode* createNodeStatementIf(std::queue<Token*>& tokens) {
     // Next, we check the end of the queue to see if the the "then" keyword is present before
     // sending the rest of the queue to create the boolean expression.
     if (tokens.back() -> value != tokens::keywordThen) {
-        throw std::runtime_error("[Error] If statement: Missing then keyword.");
+        std::cout << "[Error] If statement: Missing then keyword." << std::endl;
+        exit(-1);
     }
 
     // If we're good, send the rest of the queue to create the boolean expression and add it to the parent node.
@@ -472,7 +498,8 @@ GrammarNode* createNodeStatementWhile(std::queue<Token*>& tokens) {
     // Next, we check the end of the queue to see if the the "then" keyword is present before
     // sending the rest of the queue to create the boolean expression.
     if (tokens.back() -> value != tokens::keywordDo) {
-        throw std::runtime_error("[Error] While statement: Missing \"do\" keyword.");
+        std::cout << "[Error] While statement: Missing \"do\" keyword." << std::endl;
+        exit(-1);
     }
 
         // If we're good, send the rest of the queue to create the boolean expression and add it to the parent node.
@@ -516,7 +543,7 @@ GrammarNode* createNodeEnd() {
     return new GrammarNode(grammar::end);
 }
 
-// A A A A A A A A H H H H H H H H
+// Function to create combined node groups from line node groups.
 GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
     switch(nodes.front() -> value) {
@@ -529,7 +556,8 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
             // If the next statement is the else branch, there's no block statements, so we throw an error.
             if (nodes.front() -> value == grammar::branchElse) {
-                throw std::runtime_error("[Error] If/Else statement: No statements inside 'if' condition.");
+                std::cout << "[Error] If/Else statement: No statements inside 'if' condition." << std::endl;
+                exit(-1);
             }
 
             // Otherwise, add the block statements to the if statement.
@@ -537,7 +565,8 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
                 // Throw an error if no else statement is present.
                 if (nodes.empty()) {
-                    throw std::runtime_error("[Error] If/Else statement: No 'else' statement.");
+                    std::cout << "[Error] If/Else statement: No 'else' statement." << std::endl;
+                    exit(-1);
                 }
 
                 // If there's nested statements, make a recursive call to build its super node and
@@ -568,7 +597,8 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
             // If the next statement is the end statement, there's no block statements, so we throw an error.
             if (nodes.front() -> value == grammar::end) {
-                throw std::runtime_error("[Error] If/Else statement: No statements inside 'else' condition.");
+                std::cout << "[Error] If/Else statement: No statements inside 'else' condition." << std::endl;
+                exit(-1);
             }
 
             // Otherwise, add the block statements to the else branch.
@@ -576,7 +606,8 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
                 // Throw an error if no end statement is present.
                 if (nodes.empty()) {
-                    throw std::runtime_error("[Error] If/Else statement: No end to statement.");
+                    std::cout << "[Error] If/Else statement: No end to statement." << std::endl;
+                    exit(-1);
                 }
 
                 // If there's nested statements, make a recursive call to build its super node and
@@ -611,7 +642,8 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
             // If the next statement is the until branch, there's no block statements, so we throw an error.
             if (nodes.front() -> value == grammar::statementUntil) {
-                throw std::runtime_error("[Error] Repeat/Until statement: No statements inside 'repeat' statement.");
+                std::cout << "[Error] Repeat/Until statement: No statements inside 'repeat' statement." << std::endl;
+                exit(-1);
             }
 
             // Otherwise, add the block statements to the repeat statement.
@@ -619,7 +651,8 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
                 // Throw an error if no until statement is reached.
                 if (nodes.empty()) {
-                    throw std::runtime_error("[Error] Repeat/Until statement: No 'until' statement.");
+                    std::cout << "[Error] Repeat/Until statement: No 'until' statement." << std::endl;
+                    exit(-1);
                 }
 
                 // If there's nested statements, make a recursive call to build its super node and
@@ -654,7 +687,8 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
             // If the next statement is the until branch, there's no block statements, so we throw an error.
             if (nodes.front() -> value == grammar::end) {
-                throw std::runtime_error("[Error] While/Do statement: No statements inside 'while' statement.");
+                std::cout << "[Error] While/Do statement: No statements inside 'while' statement." << std::endl;
+                exit(-1);
             }
 
             // Otherwise, add the block statements to the repeat statement.
@@ -662,7 +696,8 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
 
                 // Throw an error if no until statement is reached.
                 if (nodes.empty()) {
-                    throw std::runtime_error("[Error] While/Do statement: No 'end' statement.");
+                    std::cout << "[Error] While/Do statement: No 'end' statement." << std::endl;
+                    exit(-1);
                 }
 
                 // If there's nested statements, make a recursive call to build its super node and
