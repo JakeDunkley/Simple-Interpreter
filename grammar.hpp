@@ -141,9 +141,10 @@ struct GrammarNode {
             }
         }
 
-        if (depth == 0){
+        if (depth == 0) {
             int s = 64;
-            while (s-- >0) std::cout<<"-";std::cout<<std::endl;
+            while (s-- > 0) std::cout<<"-";
+            std::cout<<std::endl;
         }
     }
 

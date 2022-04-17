@@ -263,10 +263,16 @@ int main() {
         parseTree -> addChildDirect(createSuperNode(nodes));
     }
 
+    cout << "Combination process done!" << endl;
+
     // Show completed parse tree.
     parseTree -> show();
 
     cout << "Parsing done!" << endl;
+
+    /* ---------------- ---------------- Interpreter Section ---------------- ---------------- */
+
+
 
     return 0;
 }

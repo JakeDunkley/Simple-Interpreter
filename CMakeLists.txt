@@ -3,4 +3,4 @@ project(Dunkley_CS4308_Interpreter)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(Dunkley_CS4308_Interpreter main.cpp tokens.hpp grammar.hpp)
+add_executable(Dunkley_CS4308_Interpreter main.cpp tokens.hpp grammar.hpp interpret.hpp)
