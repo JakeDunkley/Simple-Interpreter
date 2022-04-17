@@ -634,8 +634,16 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
             }
 
             // Add 'end' node to finish this super node group.
-            superNodeIfElse -> addChildDirect(nodes.front());
-            nodes.pop();
+            if (nodes.front() -> value != grammar::end || nodes.size() == 1) {
+                std::cout << "[Error] If/Else statement: No 'end' statement." << std::endl;
+                exit(-1);
+            }
+
+            else {
+                superNodeIfElse -> addChildDirect(nodes.front());
+                nodes.pop();
+            }
+
             return superNodeIfElse;
         }
 
@@ -679,8 +687,15 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
             }
 
             // Add 'until' node to finish this super node group.
-            superNodeRepeatUntil -> addChildDirect(nodes.front());
-            nodes.pop();
+            if (nodes.front() -> value != grammar::statementUntil || nodes.size() == 1) {
+                std::cout << "[Error] Repeat/Until statement: No 'until' statement." << std::endl;
+                exit(-1);
+            }
+
+            else {
+                superNodeRepeatUntil->addChildDirect(nodes.front());
+                nodes.pop();
+            }
             return superNodeRepeatUntil;
         }
 
@@ -724,8 +739,15 @@ GrammarNode* createSuperNode(std::queue<GrammarNode*>& nodes) {
             }
 
             // Add 'end' node to finish this super node group.
-            superNodeWhileDo -> addChildDirect(nodes.front());
-            nodes.pop();
+            if (nodes.front() -> value != grammar::end || nodes.size() == 1) {
+                std::cout << "[Error] While/Do statement: No 'end' statement." << std::endl;
+                exit(-1);
+            }
+
+            else {
+                superNodeWhileDo->addChildDirect(nodes.front());
+                nodes.pop();
+            }
             return superNodeWhileDo;
         }
 

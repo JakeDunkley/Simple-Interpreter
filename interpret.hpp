@@ -277,7 +277,7 @@ void evalStatementPrint(GrammarNode* node) {
 
 // Recursive function that evaluates nodes and their children.
 void evalNode(GrammarNode* root) {
-    interpret::showSymbolTable();
+    //interpret::showSymbolTable();
 
     switch (root -> value) {
 
@@ -296,12 +296,12 @@ void evalNode(GrammarNode* root) {
 
             if (cond) {
                 for (int i = 1; i < root -> children.size() - 2; i++) {
-                    evalNode(root->children[i]);
+                    evalNode(root -> children[i]);
                 }
             }
 
             else {
-                evalNode(root->children[root->children.size() - 2]);
+                evalNode(root -> children[root -> children.size() - 2]);
             }
 
             break;
@@ -331,6 +331,14 @@ void evalNode(GrammarNode* root) {
 
                 cond = !evalExpressionBoolean(root -> children[root -> children.size() - 1] -> children[0]);
             } while (cond);
+
+            break;
+        }
+
+        case grammar::branchElse: {
+            for (int i = 0; i < root -> children.size(); i++) {
+                evalNode(root -> children[i]);
+            }
 
             break;
         }

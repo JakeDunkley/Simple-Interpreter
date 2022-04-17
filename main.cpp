@@ -157,6 +157,14 @@ int main() {
         return -1;
     }
 
+    // Remove any extra EOLs.
+    for(int i = 1; i < tokens.size(); i++) {
+        if (tokens[i] -> value == tokens::endOfLine && tokens[i - 1] -> value == tokens::endOfLine) {
+            delete tokens[i - 1];
+            tokens.erase( tokens.begin() + i - 1);
+        }
+    }
+
     // Show final tokens.
     cout << "Generated " << tokens.size() << " tokens." << endl;
 

@@ -1,16 +1,19 @@
 //#This is a test program
 
-function a()
-    x = 0
-    y = 0
+function f()
 
-    while < x 10 do
-        while < y 10 do
-            print(+ x y)
-            x = + x 2
-            y = + y 3
+    a = 0
+    b = 0
+
+    while < a 10 do
+
+        while < b 10 do
+            print(+ a b)
+
+            b = + b 1
         end
-    end
 
-    print(13)
+        a = + a 1
+        b = 0
+    end
 end
