@@ -321,6 +321,7 @@ GrammarNode* createNodeExpressionBoolean(std::queue<Token*>& tokens) {
 
     // Otherwise, create the node group.
     else {
+
         // Try to add first token, which has to be a relative operator.
         if (!isOperatorRelative(tokens.front() -> value)) {
             std::cout << "[Error] Boolean expression: No relative operator." << std::endl;
@@ -507,7 +508,7 @@ GrammarNode* createNodeStatementWhile(std::queue<Token*>& tokens) {
         exit(-1);
     }
 
-        // If we're good, send the rest of the queue to create the boolean expression and add it to the parent node.
+    // If we're good, send the rest of the queue to create the boolean expression and add it to the parent node.
     else {
         std::queue<Token*> tokensSansDo;
 

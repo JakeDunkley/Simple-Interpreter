@@ -6,8 +6,6 @@
  * Project:     Complete Interpreter
  */
 
-// 0x2d466f7220446164
-
 #include <iostream>
 #include <fstream>
 #include <vector>
