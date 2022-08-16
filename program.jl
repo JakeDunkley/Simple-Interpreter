@@ -1,19 +1,19 @@
-//#This is a test program
+// This is a test program.
 
-function f()
+function a()
+    b = 3
+    c = - b (+ (* 13 2) 3 (- 0 26))
 
-    a = 0
-    b = 0
+    while < c 10 do
 
-    while < a 10 do
-
-        while < b 10 do
-            print(+ a b)
-
-            b = + b 1
+        if == c 5 then
+            print(+ c 100)
+        else
+            print(c)
         end
 
-        a = + a 1
-        b = 0
+        c = + 1 c     // This is an inline comment.
     end
+
+    print(b)
 end

@@ -1,12 +1,8 @@
 /*
- * Class:       CS 4308 Section 03
  * Term:        Spring 2022
  * Name:        Jake Dunkley
- * Instructor:  Sharon Perry
  * Project:     Complete Interpreter
  */
-
-// 0x2d466f7220446164
 
 #include <iostream>
 #include <fstream>
